@@ -1,0 +1,32 @@
+# 基于某种风格
+BasedOnStyle: Microsoft  # 可选: Google, Chromium, Mozilla, WebKit, Microsoft, GNU
+# Language: C
+
+# 控制行宽，避免行太长
+ColumnLimit: 120
+
+# 对头文件排序
+SortIncludes: Never
+
+# 缩进设置
+IndentWidth: 4  # 使用4个空格缩进
+
+# 控制每行最大空行数（避免空行过多）
+MaxEmptyLinesToKeep: 1
+
+
+# 注释前保留一个空格
+SpacesBeforeTrailingComments: 1
+
+AllowShortFunctionsOnASingleLine: None
+
+BreakBeforeBraces: Allman
+
+# BreakBeforeBraces: Custom
+# BraceWrapping:
+#   AfterClass:    true  # Put opening brace of a class on a new line
+#   AfterControlStatement: true # Put opening brace of control statements (if/for/while) on a new line
+#   AfterFunction: true  # Put opening brace of a function on a new line
+#   AfterNamespace: true # Put opening brace of a namespace on a new line
+#   BeforeCatch:   true  # Put 'catch' on a new line
+#   BeforeElse:    true  # Put 'else' on a new line
