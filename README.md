@@ -10,6 +10,6 @@ pytest pytest_main.py -k test_hello_world --embedded-services esp,idf  --target 
 idf.py build
 ```
 
-## 参考资料
+## References
 
-- **ESP32S3官方文档** <https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/>
+- **ESP32S3 Official Documentation** <https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/>
