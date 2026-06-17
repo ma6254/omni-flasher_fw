@@ -3,7 +3,7 @@ BasedOnStyle: Microsoft  # 可选: Google, Chromium, Mozilla, WebKit, Microsoft,
 # Language: C
 
 # 控制行宽，避免行太长
-ColumnLimit: 120
+ColumnLimit: 80
 
 # 对头文件排序
 SortIncludes: Never

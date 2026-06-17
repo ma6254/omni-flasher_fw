@@ -2,6 +2,8 @@ file(
     GLOB
     SRC_FILES
     *.c
+    ../components/*.c
+    ../components/utils/*.c
 )
 
 idf_component_register(
@@ -9,6 +11,8 @@ idf_component_register(
         ${SRC_FILES}
     INCLUDE_DIRS
         .
+        ../components
+        ../components/utils
     PRIV_REQUIRES
         esp_driver_gpio
         spi_flash

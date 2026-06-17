@@ -12,6 +12,21 @@
 #include "esp_chip_info.h"
 #include "esp_flash.h"
 #include "esp_system.h"
+#include <esp_log.h>
+#include <esp_task_wdt.h>
+#include "utils.h"
+#include "board.h"
+
+static const char *TAG = "main";
+
+static led_color_t led_color_list[] = {
+    LED_COLOR_BLACK,  LED_COLOR_RED,  LED_COLOR_GREEN,  LED_COLOR_BLUE,
+    LED_COLOR_PURPLE, LED_COLOR_CYAN, LED_COLOR_YELLOW, LED_COLOR_WHITE};
+
+const size_t LED_COLOR_LIST_LEN =
+    sizeof(led_color_list) / sizeof(led_color_list[0]);
+
+int led_color_list_index = -1;
 
 void app_main(void)
 {
@@ -40,14 +55,28 @@ void app_main(void)
     printf("%" PRIu32 "MB %s flash\n", flash_size / (uint32_t)(1024 * 1024),
            (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
 
-    printf("Minimum free heap size: %" PRIu32 " bytes\n", esp_get_minimum_free_heap_size());
-    printf("Build time: %s\n", __DATE__ " " __TIME__);
+    ESP_LOGI(TAG, "Minimum free heap size: %" PRIu32 " bytes", esp_get_minimum_free_heap_size());
+    ESP_LOGI(TAG, "Build time: %04d-%02d-%02d %s", __YEAR__, __MONTH__, __DAY__, __TIME__);
 
-    for (int i = 10; i >= 0; i--) {
-        printf("Restarting in %d seconds...\n", i);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+    // for (int i = 10; i >= 0; i--) {
+    //     printf("Restarting in %d seconds...\n", i);
+    //     vTaskDelay(1000 / portTICK_PERIOD_MS);
+    // }
+    // printf("Restarting now.\n");
+    // fflush(stdout);
+    // esp_restart();
+
+    esp_task_wdt_add(NULL);
+    board_init();
+
+    while (1)
+    {
+        esp_task_wdt_reset();
+        vTaskDelay(500 / portTICK_PERIOD_MS);
+
+        led_color_list_index++;
+        led_color_list_index%= LED_COLOR_LIST_LEN;
+        led_color_t color = led_color_list[led_color_list_index];
+        set_led_color(color);
     }
-    printf("Restarting now.\n");
-    fflush(stdout);
-    esp_restart();
 }
