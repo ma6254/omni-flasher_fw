@@ -12,9 +12,17 @@ static const char *TAG = "board";
  ******************************************************************************/
 void board_init(void)
 {
-    esp_err_t err;
+    // esp_err_t err;
 
     memset(&g_board, 0, sizeof(g_board));
+
+    gpio_config_t key_gpio_conf = {
+        .pin_bit_mask = (1ULL << KEY1_GPIO) | (1ULL << KEY2_GPIO) | (1ULL << KEY3_GPIO),
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLUP_ENABLE,
+    };
+
+    ESP_ERROR_CHECK(gpio_config(&key_gpio_conf));
 
     // RGB_LED灯配置
     {
@@ -38,7 +46,7 @@ void board_init(void)
     // 清空所有灯珠（全部熄灭）
     ESP_ERROR_CHECK(led_strip_clear(g_board.led_strip));
 
-    set_led_color(LED_COLOR_WHITE); // 白色
+    set_led_color(LED_COLOR_BLACK); // 黑色
 
     ESP_LOGI(TAG, "init done");
 }

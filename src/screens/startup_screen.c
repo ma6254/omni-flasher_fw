@@ -3,28 +3,28 @@
 #include <esp_log.h>
 
 static const char *TAG = "startup_screen";
-static lv_timer_t *startup_timer;
-static uint8_t color_index = 0;
+// static lv_timer_t *startup_timer;
+// static uint8_t color_index = 0;
 
-/*******************************************************************************
- * @brief 回调函数：开机定时器
- * @param None
- * @return None
- ******************************************************************************/
-static void startup_timer_cb(lv_timer_t *timer)
-{
-    color_index++;
-    color_index %= 2;
+// /*******************************************************************************
+//  * @brief 回调函数：开机定时器
+//  * @param None
+//  * @return None
+//  ******************************************************************************/
+// static void startup_timer_cb(lv_timer_t *timer)
+// {
+//     color_index++;
+//     color_index %= 2;
 
-    if (color_index == 0)
-    {
-        lv_obj_set_style_bg_color(lv_scr_act(), lv_color_white(), 0); // 背景色
-    }
-    else
-    {
-        lv_obj_set_style_bg_color(lv_scr_act(), lv_color_black(), 0); // 背景色
-    }
-}
+//     if (color_index == 0)
+//     {
+//         lv_obj_set_style_bg_color(lv_scr_act(), lv_color_white(), 0); // 背景色
+//     }
+//     else
+//     {
+//         lv_obj_set_style_bg_color(lv_scr_act(), lv_color_black(), 0); // 背景色
+//     }
+// }
 
 /*******************************************************************************
  * @brief 界面初始化
@@ -57,7 +57,7 @@ static void startup_screen_init(void)
     {
         lv_obj_set_flex_grow(a_btn, 1);
         lv_obj_set_size(a_btn, lv_pct(100), LV_SIZE_CONTENT);
-        lv_obj_set_style_bg_color(a_btn, lv_color_make(255, 0, 0), LV_PART_MAIN);
+        // lv_obj_set_style_bg_color(a_btn, lv_color_make(255, 0, 0), LV_PART_MAIN);
         lv_label_set_text(a_btn_label, "AAA");
         lv_obj_align(a_btn_label, LV_ALIGN_CENTER, 0, 0);
         lv_obj_set_style_text_color(a_btn_label, lv_color_black(), LV_PART_MAIN);
@@ -68,7 +68,7 @@ static void startup_screen_init(void)
     {
         lv_obj_set_flex_grow(b_btn, 1);
         lv_obj_set_size(b_btn, lv_pct(100), LV_SIZE_CONTENT);
-        lv_obj_set_style_bg_color(b_btn, lv_color_make(0, 255, 0), LV_PART_MAIN);
+        // lv_obj_set_style_bg_color(b_btn, lv_color_make(0, 255, 0), LV_PART_MAIN);
         lv_label_set_text(b_btn_label, "BBB");
         lv_obj_align(b_btn_label, LV_ALIGN_CENTER, 0, 0);
         lv_obj_set_style_text_color(b_btn_label, lv_color_black(), LV_PART_MAIN);
@@ -79,16 +79,16 @@ static void startup_screen_init(void)
     {
         lv_obj_set_flex_grow(c_btn, 1);
         lv_obj_set_size(c_btn, lv_pct(100), LV_SIZE_CONTENT);
-        lv_obj_set_style_bg_color(c_btn, lv_color_make(0, 0, 255), LV_PART_MAIN);
+        // lv_obj_set_style_bg_color(c_btn, lv_color_make(0, 0, 255), LV_PART_MAIN);
 
         lv_label_set_text(c_btn_label, "CCC");
         lv_obj_align(c_btn_label, LV_ALIGN_CENTER, 0, 0);
         lv_obj_set_style_text_color(c_btn_label, lv_color_black(), LV_PART_MAIN);
     }
 
-    startup_timer = lv_timer_create(startup_timer_cb, 500, NULL);
-    lv_timer_reset(startup_timer);
-    lv_timer_resume(startup_timer);
+    // startup_timer = lv_timer_create(startup_timer_cb, 500, NULL);
+    // lv_timer_reset(startup_timer);
+    // lv_timer_resume(startup_timer);
 
     ESP_LOGI(TAG, "initialized");
 }

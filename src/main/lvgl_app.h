@@ -12,12 +12,13 @@
  *
  ******************************************************************************/
 
-#define LCD_HOR_PIXEL (240)                    //
-#define LCD_VER_PIXEL (320)                    //
-#define LCD_DRAW_BUFFER_HEIGHT (LCD_HOR_PIXEL) //
+#define LCD_HOR_PIXEL (240) // LCD水平像素数
+#define LCD_VER_PIXEL (320) // LCD垂直像素数
+
+#define LCD_DRAW_BUFFER_HEIGHT (40) // LVGL绘图缓冲区高度，单位像素行数，建议设置为屏幕水平像素数的整数倍
 
 #define LCD_SPI_NUM (SPI2_HOST)                   //
-#define LCD_PIXEL_CLOCK_HZ (40 * 1000 * 1000)     // 
+#define LCD_PIXEL_CLOCK_HZ (80 * 1000 * 1000)     //
 #define LCD_CMD_BITS (8)                          //
 #define LCD_PARAM_BITS (8)                        // 
 #define LCD_COLOR_SPACE (ESP_LCD_COLOR_SPACE_RGB) // 颜色通道顺序

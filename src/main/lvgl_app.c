@@ -1,4 +1,5 @@
 
+#include <string.h>
 #include <esp_log.h>
 #include <esp_timer.h>
 #include <esp_lcd_panel_io.h>
@@ -8,12 +9,14 @@
 
 #include <lvgl.h>
 #include <esp_lvgl_port.h>
+#include "core/lv_group.h"
 #include "lvgl_app.h"
 // #include "config.h"
 
 #include "board.h"
 #include "misc/lv_color.h"
-// #include "buzzer.h"
+#include "key.h"
+#include "portmacro.h"
 #include "startup_screen.h"
 
 
@@ -60,6 +63,62 @@ void *screen_get_switch_user_data(void)
 }
 
 /*******************************************************************************
+ * @brief 回调，LVGL输入设备，读取编码器数据
+ * @param None
+ * @return none
+ * @ref lv_indev_read_cb_t
+ ******************************************************************************/
+static void lvgl_indev_keypad_cb(lv_indev_t *indev, lv_indev_data_t *data)
+{
+    key_event_t key_event;
+
+    // ESP_LOGI(TAG, "keypad read cb");
+    // 这里应该读取实际的按键状态并填充data结构体
+    // 例如：
+    // data->state = (gpio_get_level(KEY_GPIO) == 0) ? LV_INDEV_STATE_PRESSED : LV_INDEV_STATE_RELEASED;
+    // data->key = ...; // 设置按键值，例如LV_KEY_ENTER, LV_KEY_UP等
+
+    memset(&key_event, 0, sizeof(key_event_t));
+
+    BaseType_t xReturned = xQueueReceive(keys_event_queue, &key_event, 0);
+    if(xReturned == pdFAIL)
+    {
+        return;
+    }
+
+    if (key_event.id >= KEY_ENUM_COUNT)
+    {
+        ESP_LOGE(TAG, "Invalid key id: %d", key_event.id);
+        return;
+    }
+
+    if (key_event.state == KEY_STATE_PRESSED)
+    {
+        data->state = LV_INDEV_STATE_PRESSED;
+    }
+    else if (key_event.state == KEY_STATE_RELEASED)
+    {
+        data->state = LV_INDEV_STATE_RELEASED;
+    }
+    else
+    {
+        data->state = LV_INDEV_STATE_RELEASED; // 默认状态
+    }
+
+    if(key_event.id == KEY_1)
+        data->key = LV_KEY_PREV; // 设置按键值，例如LV_KEY_ENTER, LV_KEY_UP等
+    else if(key_event.id == KEY_2)
+        data->key = LV_KEY_ENTER; // 设置按键值，例如LV_KEY_ENTER, LV_KEY_UP等
+    else if(key_event.id == KEY_3)
+        data->key = LV_KEY_NEXT; // 设置按键值，例如LV_KEY_ENTER, LV_KEY_UP等
+
+    // ESP_LOGI(TAG, "Key %d state changed to %s", key_event.id,
+    //          (key_event.state == KEY_STATE_PRESSED) ? "PRESSED" : "RELEASED");
+
+    data->continue_reading = true;
+}
+
+/*******************************************************************************
  * @brief LVGL初始化
  * @param None
  * @return none
@@ -69,23 +128,27 @@ void lvgl_app_init(void)
 
     // 显示缓冲区像素总数
     const uint32_t display_buffer_pixels =
-        (uint32_t)LCD_VER_PIXEL * LCD_DRAW_BUFFER_HEIGHT;
+        (uint32_t)LCD_HOR_PIXEL * LCD_DRAW_BUFFER_HEIGHT;
 
     // 背光PWM初始化
-    ledc_timer_config_t ledc_timer = {.speed_mode = LEDC_LOW_SPEED_MODE,
-                                      .duty_resolution = LEDC_TIMER_10_BIT,
-                                      .timer_num = LCD_BL_LEDC_TIMER,
-                                      .freq_hz = LCD_BL_LEDC_FREQ,
-                                      .clk_cfg = LEDC_AUTO_CLK};
+    ledc_timer_config_t ledc_timer = {
+        .speed_mode = LEDC_LOW_SPEED_MODE,
+        .duty_resolution = LEDC_TIMER_10_BIT,
+        .timer_num = LCD_BL_LEDC_TIMER,
+        .freq_hz = LCD_BL_LEDC_FREQ,
+        .clk_cfg = LEDC_AUTO_CLK,
+    };
     ESP_ERROR_CHECK(ledc_timer_config(&ledc_timer));
 
-    ledc_channel_config_t ledc_channel = {.speed_mode = LEDC_LOW_SPEED_MODE,
-                                          .channel = LCD_BL_LEDC_CHANNEL,
-                                          .timer_sel = LCD_BL_LEDC_TIMER,
-                                          .intr_type = LEDC_INTR_DISABLE,
-                                          .gpio_num = LCD_BL_GPIO,
-                                          .duty = 0, // Set duty to 50%
-                                          .hpoint = 0};
+    ledc_channel_config_t ledc_channel = {
+        .speed_mode = LEDC_LOW_SPEED_MODE,
+        .channel = LCD_BL_LEDC_CHANNEL,
+        .timer_sel = LCD_BL_LEDC_TIMER,
+        .intr_type = LEDC_INTR_DISABLE,
+        .gpio_num = LCD_BL_GPIO,
+        .duty = 0, // Set duty to 50%
+        .hpoint = 0,
+    };
     ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel));
 
     // SPI初始化
@@ -108,11 +171,10 @@ void lvgl_app_init(void)
         .lcd_cmd_bits = LCD_CMD_BITS,
         .lcd_param_bits = LCD_PARAM_BITS,
         .spi_mode = 0,
-        .trans_queue_depth = 10,
+        .trans_queue_depth = 20,
     };
     esp_lcd_panel_io_handle_t IoHandle = NULL;
-    ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi(
-        (esp_lcd_spi_bus_handle_t)LCD_SPI_NUM, &IoConfig, &IoHandle));
+    ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)LCD_SPI_NUM, &IoConfig, &IoHandle));
 
     const esp_lcd_panel_dev_config_t PanelConfig = {
         .reset_gpio_num = LCD_RST_GPIO,
@@ -121,8 +183,7 @@ void lvgl_app_init(void)
         .flags.reset_active_high = 0,
     };
 
-    ESP_ERROR_CHECK(
-        esp_lcd_new_panel_st7789(IoHandle, &PanelConfig, &PanelHandle));
+    ESP_ERROR_CHECK(esp_lcd_new_panel_st7789(IoHandle, &PanelConfig, &PanelHandle));
 
     ESP_ERROR_CHECK(esp_lcd_panel_reset(PanelHandle));
     ESP_ERROR_CHECK(esp_lcd_panel_init(PanelHandle));
@@ -131,15 +192,15 @@ void lvgl_app_init(void)
 
     // LVGL参数配置
     const lvgl_port_cfg_t lvgl_port_cfg = {
-        .task_priority = 4,  // LVGL task priority
-        .task_stack = 8192,  // LVGL task stack size
-        .task_affinity = -1, // LVGL task pinned to core (-1 is no affinity)
-        .task_max_sleep_ms = 500, // Maximum sleep in LVGL task
-        .timer_period_ms = 5      // LVGL timer tick period in ms
+        .task_priority = 4,      // LVGL task priority
+        .task_stack = 8192,      // LVGL task stack size
+        .task_affinity = 1,      // LVGL task pinned to core 1 (main is on core 0)
+        .task_max_sleep_ms = 10, // Maximum sleep in LVGL task
+        .timer_period_ms = 10    // LVGL timer tick period in ms
     };
     ESP_ERROR_CHECK(lvgl_port_init(&lvgl_port_cfg));
 
-    lvgl_port_lock(0);
+    ESP_ERROR_CHECK(lvgl_port_lock(portMAX_DELAY) ? ESP_OK : ESP_FAIL);
 
     const lvgl_port_display_cfg_t DisplayConfig = {
         .io_handle = IoHandle,
@@ -149,38 +210,46 @@ void lvgl_app_init(void)
         .hres = LCD_HOR_PIXEL,
         .vres = LCD_VER_PIXEL,
         .monochrome = false,
-        .color_format = LV_COLOR_FORMAT_RGB565,
+        .color_format = LV_COLOR_FORMAT_RGB565_SWAPPED,
         .rotation =
             {
                 .swap_xy = false,
                 .mirror_x = false,
                 .mirror_y = false,
             },
-        .flags = {
-            .buff_dma = true,
-            .buff_spiram = true,
-            .swap_bytes = true,
-        }};
+        .flags =
+            {
+                .buff_dma = true,
+                .buff_spiram = false,
+                .swap_bytes = false,
+            },
+    };
     gLvDisplay = lvgl_port_add_disp(&DisplayConfig);
     ESP_ERROR_CHECK(gLvDisplay ? ESP_OK : ESP_FAIL);
 
     // 设置旋转参数
     lv_display_set_rotation(gLvDisplay, LV_DISPLAY_ROTATION_90);
-    lvgl_port_unlock();
-
+    
     lv_obj_t *screen = lv_screen_active();
     ESP_ERROR_CHECK(screen ? ESP_OK : ESP_FAIL);
-
+    
     ESP_LOGI(TAG, "lcd panel init done");
+    
+    lv_group_t *group = lv_group_get_default();
+    if (!group)
+    {
+        group = lv_group_create();
+        lv_group_set_default(group);
+        lv_group_remove_all_objs(group);
+    }
 
-    // const esp_timer_create_args_t periodic_timer_args = {
-    //     .callback = &lv_tick_task,
-    //     .name = "lvgl_tick"};
-    // esp_timer_handle_t periodic_timer;
-    // ESP_ERROR_CHECK(esp_timer_create(&periodic_timer_args, &periodic_timer));
-    // ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, 1000)); //
-    // 1ms周期
+    gLvIndev = lv_indev_create();
+    lv_indev_set_type(gLvIndev, LV_INDEV_TYPE_KEYPAD);
+    lv_indev_set_read_cb(gLvIndev, lvgl_indev_keypad_cb);
+    lv_indev_set_display(gLvIndev, gLvDisplay);
+    lv_indev_set_group(gLvIndev, group);
 
+    lvgl_port_unlock();
     ESP_LOGI(TAG, "lvgl_app_init");
 }
 
@@ -210,10 +279,11 @@ void screen_init(void)
     // DEBUG
     set_lcd_on();
 
+    ESP_ERROR_CHECK(lvgl_port_lock(portMAX_DELAY) ? ESP_OK : ESP_FAIL);
     lv_obj_clean(lv_scr_act()); // 清空屏幕
-    // lv_obj_set_style_bg_color(lv_scr_act(), lv_color_black(), 0); // 背景色
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_make(0x00, 0x00, 0xFF),
                               0); // 背景色
+    lvgl_port_unlock();
 
     esp_err = screen_switch(&startup_screen);
     ESP_ERROR_CHECK(esp_err);

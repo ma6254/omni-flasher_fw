@@ -10,6 +10,37 @@ pytest pytest_main.py -k test_hello_world --embedded-services esp,idf  --target 
 idf.py build
 ```
 
+lv_demo_benchmark
+
+```bash
+lvgl_benchmark: ========== Benchmark Results ==========
+lvgl_benchmark: Scene                               FPS   CPU% Render(ms)  Flush(ms)
+lvgl_benchmark: -----------------------------------------------------------------------
+lvgl_benchmark: Empty screen                         33     69         19          0
+lvgl_benchmark: Moving wallpaper                     33     66         18          2
+lvgl_benchmark: Single rectangle                     96      9          0          0
+lvgl_benchmark: Multiple rectangles                  48     46          0         10
+lvgl_benchmark: Multiple RGB images                  87      7          0          0
+lvgl_benchmark: Multiple ARGB images                 57     34          0          3
+lvgl_benchmark: Rotated ARGB images                  33     61         11          8
+lvgl_benchmark: Multiple labels                      50     51          0          0
+lvgl_benchmark: Screen sized text                    16     81         51          0
+lvgl_benchmark: Multiple arcs                        96     12          0          0
+lvgl_benchmark: Containers                           57     20         10          0
+lvgl_benchmark: Containers with overlay              32     61         18          2
+lvgl_benchmark: Containers with opa                  57     25         10          0
+lvgl_benchmark: Containers with opa_layer            47     40         18          0
+lvgl_benchmark: Containers with scrolling            31     64         15          5
+lvgl_benchmark: Widgets demo                         21     75         16          1
+lvgl_benchmark: -----------------------------------------------------------------------
+lvgl_benchmark: Valid scenes : 16
+lvgl_benchmark: Avg FPS      : 49
+lvgl_benchmark: Avg CPU%     : 45
+lvgl_benchmark: Avg Render   : 11 ms
+lvgl_benchmark: Avg Flush    : 1 ms
+lvgl_benchmark: =======================================
+```
+
 ## GPIO_MAP
 
 | GPIO_NUM | Label      | Mode | Function      |

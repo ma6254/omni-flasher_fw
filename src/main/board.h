@@ -28,6 +28,14 @@
 
 #define BOOT_KEY_GPIO (GPIO_NUM_0) // BOOT按键
 
+#define KEY1_GPIO (GPIO_NUM_18) // 按键
+#define KEY2_GPIO (GPIO_NUM_17) // 按键
+#define KEY3_GPIO (GPIO_NUM_16) // 按键
+
+#define read_key1_io() (gpio_get_level(KEY1_GPIO) == 0)
+#define read_key2_io() (gpio_get_level(KEY2_GPIO) == 0)
+#define read_key3_io() (gpio_get_level(KEY3_GPIO) == 0)
+
 /*******************************************************************************
  *
  * 封装引脚操作

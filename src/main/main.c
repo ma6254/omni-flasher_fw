@@ -16,7 +16,9 @@
 #include <esp_task_wdt.h>
 #include "utils.h"
 #include "board.h"
+#include "key.h"
 #include "lvgl_app.h"
+#include "lvgl_benchmark.h"
 
 static const char *TAG = "main";
 
@@ -29,6 +31,11 @@ const size_t LED_COLOR_LIST_LEN =
 
 int led_color_list_index = -1;
 
+/*******************************************************************************
+ * @brief 主函数，程序入口
+ * @param None
+ * @return none
+ ******************************************************************************/
 void app_main(void)
 {
     printf("Hello world!\n");
@@ -69,18 +76,23 @@ void app_main(void)
 
     esp_task_wdt_add(NULL);
     board_init();
+    key_init();
     lvgl_app_init();
     screen_init();
+    // lv_demo_benchmark_init();
+
+    // uint8_t key1_state = 0;
 
     while (1)
     {
         esp_task_wdt_reset();
         screen_loop_handler();
-        vTaskDelay(500 / portTICK_PERIOD_MS);
+        key_task_handler();
+        vTaskDelay(10 / portTICK_PERIOD_MS);
 
-        led_color_list_index++;
-        led_color_list_index%= LED_COLOR_LIST_LEN;
-        led_color_t color = led_color_list[led_color_list_index];
-        set_led_color(color);
+        // led_color_list_index++;
+        // led_color_list_index%= LED_COLOR_LIST_LEN;
+        // led_color_t color = led_color_list[led_color_list_index];
+        // set_led_color(color);
     }
 }
