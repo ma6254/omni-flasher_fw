@@ -16,6 +16,7 @@
 #include <esp_task_wdt.h>
 #include "utils.h"
 #include "board.h"
+#include "lvgl_app.h"
 
 static const char *TAG = "main";
 
@@ -68,10 +69,13 @@ void app_main(void)
 
     esp_task_wdt_add(NULL);
     board_init();
+    lvgl_app_init();
+    screen_init();
 
     while (1)
     {
         esp_task_wdt_reset();
+        screen_loop_handler();
         vTaskDelay(500 / portTICK_PERIOD_MS);
 
         led_color_list_index++;

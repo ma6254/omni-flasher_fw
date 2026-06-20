@@ -13,17 +13,12 @@
 
 #define LCD_BL_GPIO (GPIO_NUM_9)    // LCD屏幕：背光
 #define LCD_CS_GPIO (GPIO_NUM_14)   // LCD屏幕：使能
-#define LCD_MISO_GPIO (GPIO_NUM_10) // LCD屏幕：数据输入
 #define LCD_SCLK_GPIO (GPIO_NUM_13) // LCD屏幕：时钟
 #define LCD_MOSI_GPIO (GPIO_NUM_11) // LCD屏幕：数据输出
 #define LCD_DC_GPIO (GPIO_NUM_12)   // LCD屏幕：数据/命令选择
 #define LCD_RST_GPIO (GPIO_NUM_15)  // LCD屏幕：复位
-#define KNOB_A_GPIO (GPIO_NUM_16)   // 旋钮：A相
-#define KNOB_B_GPIO (GPIO_NUM_17)   // 旋钮：B相
-#define KNOB_K_GPIO (GPIO_NUM_18)   // 旋钮：按键
+
 #define BUZZER_GPIO (GPIO_NUM_21)   // 蜂鸣器
-#define OTG_STA_GPIO (GPIO_NUM_38)  // USB：OTG检测
-#define VBUS_STA_GPIO (GPIO_NUM_7)  // USB：VBUS检测
 
 #define MB_UART_RTS_GPIO (GPIO_NUM_2) // UART：请求发送
 #define MB_UART_RXD_GPIO (GPIO_NUM_3) // UART：接收数据

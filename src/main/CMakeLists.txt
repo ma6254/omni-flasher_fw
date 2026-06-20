@@ -4,6 +4,7 @@ file(
     *.c
     ../components/*.c
     ../components/utils/*.c
+    ../screens/*.c
 )
 
 idf_component_register(
@@ -13,6 +14,7 @@ idf_component_register(
         .
         ../components
         ../components/utils
+        ../screens
     PRIV_REQUIRES
         esp_driver_gpio
         spi_flash

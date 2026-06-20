@@ -1,0 +1,330 @@
+
+#include <esp_log.h>
+#include <esp_timer.h>
+#include <esp_lcd_panel_io.h>
+#include <esp_lcd_panel_vendor.h>
+#include <esp_lcd_panel_ops.h>
+#include <driver/ledc.h>
+
+#include <lvgl.h>
+#include <esp_lvgl_port.h>
+#include "lvgl_app.h"
+// #include "config.h"
+
+#include "board.h"
+#include "misc/lv_color.h"
+// #include "buzzer.h"
+#include "startup_screen.h"
+
+
+static const char *TAG = "lvgl_app";
+static lv_display_t *gLvDisplay = NULL;
+static esp_lcd_panel_handle_t PanelHandle = NULL;
+static lv_indev_t *gLvIndev = NULL;
+static screen_t *current_screen = NULL;
+static screen_t *wait_switch_screen = NULL;
+static screen_t *prev_screen = NULL;
+static screen_t *switch_screen_user_data = NULL;
+
+static volatile uint32_t screen_switch_flag = 0;
+
+uint32_t screen_encoder_sleep_flag = 0;
+uint32_t screen_encoder_activity_flag = 0;
+
+void set_lcd_bl_brightness(uint32_t brightness)
+{
+    uint32_t duty = (uint32_t)((brightness * 1024) / SCREEN_BRIGHTNESS_MAX);
+    ESP_ERROR_CHECK(ledc_set_duty(LEDC_LOW_SPEED_MODE, LCD_BL_LEDC_CHANNEL,
+    duty)); ESP_ERROR_CHECK(ledc_update_duty(LEDC_LOW_SPEED_MODE,
+    LCD_BL_LEDC_CHANNEL));
+}
+
+void set_lcd_bl_on(void)
+{
+    set_lcd_bl_brightness(SCREEN_BRIGHTNESS_1);
+}
+
+// static void lv_tick_task(void *arg)
+// {
+//     lv_tick_inc(1); // 通常以1ms为周期调用
+// }
+
+lv_indev_t *screen_get_indev(void)
+{
+    return gLvIndev;
+}
+
+void *screen_get_switch_user_data(void)
+{
+    return switch_screen_user_data;
+}
+
+/*******************************************************************************
+ * @brief LVGL初始化
+ * @param None
+ * @return none
+ ******************************************************************************/
+void lvgl_app_init(void)
+{
+
+    // 显示缓冲区像素总数
+    const uint32_t display_buffer_pixels =
+        (uint32_t)LCD_VER_PIXEL * LCD_DRAW_BUFFER_HEIGHT;
+
+    // 背光PWM初始化
+    ledc_timer_config_t ledc_timer = {.speed_mode = LEDC_LOW_SPEED_MODE,
+                                      .duty_resolution = LEDC_TIMER_10_BIT,
+                                      .timer_num = LCD_BL_LEDC_TIMER,
+                                      .freq_hz = LCD_BL_LEDC_FREQ,
+                                      .clk_cfg = LEDC_AUTO_CLK};
+    ESP_ERROR_CHECK(ledc_timer_config(&ledc_timer));
+
+    ledc_channel_config_t ledc_channel = {.speed_mode = LEDC_LOW_SPEED_MODE,
+                                          .channel = LCD_BL_LEDC_CHANNEL,
+                                          .timer_sel = LCD_BL_LEDC_TIMER,
+                                          .intr_type = LEDC_INTR_DISABLE,
+                                          .gpio_num = LCD_BL_GPIO,
+                                          .duty = 0, // Set duty to 50%
+                                          .hpoint = 0};
+    ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel));
+
+    // SPI初始化
+    const spi_bus_config_t SpiBusConfig = {
+        .mosi_io_num = LCD_MOSI_GPIO,
+        .miso_io_num = GPIO_NUM_NC,
+        .sclk_io_num = LCD_SCLK_GPIO,
+        .quadwp_io_num = GPIO_NUM_NC,
+        .quadhd_io_num = GPIO_NUM_NC,
+        .max_transfer_sz =
+            (uint32_t)LCD_VER_PIXEL * LCD_HOR_PIXEL * sizeof(uint16_t),
+    };
+    ESP_ERROR_CHECK(
+        spi_bus_initialize(LCD_SPI_NUM, &SpiBusConfig, SPI_DMA_CH_AUTO));
+
+    const esp_lcd_panel_io_spi_config_t IoConfig = {
+        .dc_gpio_num = LCD_DC_GPIO,
+        .cs_gpio_num = LCD_CS_GPIO,
+        .pclk_hz = LCD_PIXEL_CLOCK_HZ,
+        .lcd_cmd_bits = LCD_CMD_BITS,
+        .lcd_param_bits = LCD_PARAM_BITS,
+        .spi_mode = 0,
+        .trans_queue_depth = 10,
+    };
+    esp_lcd_panel_io_handle_t IoHandle = NULL;
+    ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi(
+        (esp_lcd_spi_bus_handle_t)LCD_SPI_NUM, &IoConfig, &IoHandle));
+
+    const esp_lcd_panel_dev_config_t PanelConfig = {
+        .reset_gpio_num = LCD_RST_GPIO,
+        .color_space = LCD_COLOR_SPACE,
+        .bits_per_pixel = LCD_BITS_PER_PIXEL,
+        .flags.reset_active_high = 0,
+    };
+
+    ESP_ERROR_CHECK(
+        esp_lcd_new_panel_st7789(IoHandle, &PanelConfig, &PanelHandle));
+
+    ESP_ERROR_CHECK(esp_lcd_panel_reset(PanelHandle));
+    ESP_ERROR_CHECK(esp_lcd_panel_init(PanelHandle));
+    ESP_ERROR_CHECK(esp_lcd_panel_invert_color(PanelHandle, true));
+    ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(PanelHandle, true));
+
+    // LVGL参数配置
+    const lvgl_port_cfg_t lvgl_port_cfg = {
+        .task_priority = 4,  // LVGL task priority
+        .task_stack = 8192,  // LVGL task stack size
+        .task_affinity = -1, // LVGL task pinned to core (-1 is no affinity)
+        .task_max_sleep_ms = 500, // Maximum sleep in LVGL task
+        .timer_period_ms = 5      // LVGL timer tick period in ms
+    };
+    ESP_ERROR_CHECK(lvgl_port_init(&lvgl_port_cfg));
+
+    lvgl_port_lock(0);
+
+    const lvgl_port_display_cfg_t DisplayConfig = {
+        .io_handle = IoHandle,
+        .panel_handle = PanelHandle,
+        .buffer_size = display_buffer_pixels,
+        .double_buffer = true, // Use double buffering
+        .hres = LCD_HOR_PIXEL,
+        .vres = LCD_VER_PIXEL,
+        .monochrome = false,
+        .color_format = LV_COLOR_FORMAT_RGB565,
+        .rotation =
+            {
+                .swap_xy = false,
+                .mirror_x = false,
+                .mirror_y = false,
+            },
+        .flags = {
+            .buff_dma = true,
+            .buff_spiram = true,
+            .swap_bytes = true,
+        }};
+    gLvDisplay = lvgl_port_add_disp(&DisplayConfig);
+    ESP_ERROR_CHECK(gLvDisplay ? ESP_OK : ESP_FAIL);
+
+    // 设置旋转参数
+    lv_display_set_rotation(gLvDisplay, LV_DISPLAY_ROTATION_90);
+    lvgl_port_unlock();
+
+    lv_obj_t *screen = lv_screen_active();
+    ESP_ERROR_CHECK(screen ? ESP_OK : ESP_FAIL);
+
+    ESP_LOGI(TAG, "lcd panel init done");
+
+    // const esp_timer_create_args_t periodic_timer_args = {
+    //     .callback = &lv_tick_task,
+    //     .name = "lvgl_tick"};
+    // esp_timer_handle_t periodic_timer;
+    // ESP_ERROR_CHECK(esp_timer_create(&periodic_timer_args, &periodic_timer));
+    // ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, 1000)); //
+    // 1ms周期
+
+    ESP_LOGI(TAG, "lvgl_app_init");
+}
+
+/*******************************************************************************
+ * @brief 打开屏幕
+ * @param None
+ * @return None
+ ******************************************************************************/
+void set_lcd_on(void)
+{
+    // ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(PanelHandle, true));
+    set_lcd_bl_on();
+}
+
+/*******************************************************************************
+ * @brief 切换到初始的显示界面
+ * @param None
+ * @return None
+ ******************************************************************************/
+void screen_init(void)
+{
+    esp_err_t esp_err;
+
+    // esp_err = screen_switch(&startup_screen);
+    // ESP_ERROR_CHECK(esp_err);
+
+    // DEBUG
+    set_lcd_on();
+
+    lv_obj_clean(lv_scr_act()); // 清空屏幕
+    // lv_obj_set_style_bg_color(lv_scr_act(), lv_color_black(), 0); // 背景色
+    lv_obj_set_style_bg_color(lv_scr_act(), lv_color_make(0x00, 0x00, 0xFF),
+                              0); // 背景色
+
+    esp_err = screen_switch(&startup_screen);
+    ESP_ERROR_CHECK(esp_err);
+
+    // esp_err = screen_switch(&setting_screen);
+    // esp_err = screen_switch(&sysinfo_screen);
+    // ESP_ERROR_CHECK(esp_err);
+}
+
+/*******************************************************************************
+ * @brief 切换显示界面
+ * @param None
+ * @return None
+ ******************************************************************************/
+esp_err_t screen_switch(const screen_t *screen)
+{
+    return screen_switch_arg(screen, NULL);
+}
+
+esp_err_t screen_switch_arg(const screen_t *screen, void *user_data)
+{
+    if (screen == NULL)
+        return ESP_FAIL;
+
+    if (screen->init_cb == NULL)
+        return ESP_FAIL;
+
+    if (screen->loop_cb == NULL)
+        return ESP_FAIL;
+
+    switch_screen_user_data = user_data;
+    wait_switch_screen = (screen_t *)screen;
+    screen_switch_flag = 1;
+
+    // ESP_LOGI(TAG, "waiting switch_screen to %s", wait_switch_screen->name);
+
+    return ESP_OK;
+}
+
+/*******************************************************************************
+ * @brief 获取上一个界面
+ * @param None
+ * @return none
+ ******************************************************************************/
+screen_t *screen_get_prev(void)
+{
+    return prev_screen;
+}
+
+/*******************************************************************************
+ * @brief 清除屏幕
+ * @param None
+ * @return none
+ ******************************************************************************/
+void screen_clear(void)
+{
+    lv_obj_t *parent = lv_scr_act();
+
+    lv_obj_clean(parent); // 清空屏幕
+    lv_obj_set_style_bg_color(parent, lv_color_make(0x2D, 0x43, 0x56),
+                              LV_PART_MAIN); // 背景色
+
+    lv_obj_set_style_pad_left(parent, 0, LV_PART_MAIN); // 内边距
+
+    lv_obj_clear_flag(lv_scr_act(), LV_OBJ_FLAG_SCROLLABLE); // 禁止滚动
+    lv_obj_set_scrollbar_mode(lv_scr_act(), LV_SCROLLBAR_MODE_OFF);
+}
+
+/*******************************************************************************
+ * @brief 循环处理业务逻辑
+ * @param None
+ * @return none
+ ******************************************************************************/
+void screen_loop_handler(void)
+{
+    if (screen_switch_flag)
+    {
+        screen_switch_flag = 0;
+
+        if (current_screen != NULL)
+        {
+            lvgl_port_lock(portMAX_DELAY);
+
+            if (current_screen->deinit_cb)
+                current_screen->deinit_cb();
+
+            lvgl_port_unlock();
+        }
+
+        prev_screen = current_screen;
+
+        lvgl_port_lock(portMAX_DELAY);
+        wait_switch_screen->init_cb();
+        lvgl_port_unlock();
+
+        // ESP_LOGI(TAG, "switch_screen to %s", wait_switch_screen->name);
+
+        current_screen = (screen_t *)wait_switch_screen;
+    }
+
+    if (current_screen == NULL)
+        return;
+
+    if (current_screen->loop_cb)
+    {
+        bool locked = lvgl_port_lock(0);
+
+        if (locked)
+        {
+            current_screen->loop_cb();
+            lvgl_port_unlock();
+        }
+    }
+}
