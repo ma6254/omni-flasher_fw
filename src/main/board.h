@@ -20,10 +20,6 @@
 
 #define BUZZER_GPIO (GPIO_NUM_21)   // 蜂鸣器
 
-#define MB_UART_RTS_GPIO (GPIO_NUM_2) // UART：请求发送
-#define MB_UART_RXD_GPIO (GPIO_NUM_3) // UART：接收数据
-#define MB_UART_TXD_GPIO (GPIO_NUM_4) // UART：发送数据
-
 #define STA_LED_GPIO (GPIO_NUM_48) // 状态指示灯
 
 #define BOOT_KEY_GPIO (GPIO_NUM_0) // BOOT按键

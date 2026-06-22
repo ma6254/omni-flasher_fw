@@ -2,15 +2,26 @@
 
 ## testing & build
 
+### Comparison of ESP32-S3 series chips
+
+Note: Different models of ESP32S3 chips correspond to different types of PSRAM
+
+- _ESP32S3_: No PSRAM
+- _ESP32S3-R2_: 2 MB (Quad SPI)
+- _ESP32S3-R8_: 8 MB (Octal SPI)
+
+### Build & Flash
+
 ```bash
 pytest pytest_main.py -k test_hello_world --embedded-services esp,idf  --target esp32s3 --port COM4
 ```
 
 ```bash
 idf.py build
+idf.py flash
 ```
 
-lv_demo_benchmark
+### LVGL-Benchmark
 
 ```bash
 lvgl_benchmark: ========== Benchmark Results ==========
@@ -43,39 +54,72 @@ lvgl_benchmark: =======================================
 
 ## GPIO_MAP
 
-| GPIO_NUM | Label      | Mode | Function      |
-| -------- | ---------- | ---- | ------------- |
-| GPIO0    | BOOT       | IN   |               |
-| GPIO3    | JTAG_EN    | IN   |               |
-| GPIO19   | USB_D-     | IO   | USB           |
-| GPIO20   | USB_D+     | IO   | USB           |
-| GPIO21   | BUZZER     | OUT  | PWM           |
-| GPIO48   | WS2812_LED | OUT  | LED_STRIP_RMT |
-|          | LCD_BL     | OUT  | PWM           |
-|          | LCD_SCL    | OUT  | SPI_CLK       |
-|          | LCD_SDA    | OUT  | SPI_MOSI      |
-|          | LCD_CS     | OUT  | SPI_CS        |
-|          | LCD_RST    | OUT  | GPIO          |
-|          | LCD_RS     | OUT  | GPIO          |
-|          | SWDIO      | IO   |               |
-|          | SWCLK      | OUT  |               |
-|          | TAR_RST    | OUT  | GPIO          |
-|          | TAR_TDI    | IN   |               |
-|          | TAR_TDO    | OUT  |               |
-|          | TAR_IC1    | IO   |               |
-|          | TAR_IC2    | IO   |               |
-|          | TAR_IC3    | IO   |               |
-|          | TAR_IC5    | IO   |               |
-|          | TAR_IC6    | IO   |               |
-|          | TAR_IC7    | IO   |               |
-|          | TAR_IC9    | IO   |               |
-|          | TAR_IC10   | IO   |               |
-|          | TAR_IC11   | IO   |               |
-|          | TAR_IC13   | IO   |               |
-|          | TAR_IC14   | IO   |               |
-|          | TAR_IC15   | IO   |               |
-|          | U1TX       | OUT  |               |
-|          | U1RX       | IN   |               |
+| GPIO_NUM | Label       | Mode | Function      |
+| -------- | ----------- | ---- | ------------- |
+| GPIO0    | BOOT        | IN   |               |
+| GPIO1    | IC_VCC_EN   | OUT  |               |
+| GPIO2    | JTAG_VCC_EN | OUT  |               |
+| GPIO3    | JTAG_EN     | IN   |               |
+| GPIO4    | IC_OE1      | OUT  |               |
+| GPIO5    | PMIC_SCL    | OUT  |               |
+| GPIO6    | IC_OE2      | OUT  |               |
+| GPIO7    | PMIC_SDA    | OUT  |               |
+| GPIO8    | IC_OE3      | OUT  |               |
+| GPIO9    | LCD_BL      | OUT  | LEDC_PWM_CH1  |
+| GPIO10   | PMIC_IRQ    | IN   | INTR          |
+| GPIO11   | LCD_MOSI    | OUT  | SPI2_MOSI     |
+| GPIO12   | LCD_DC      | OUT  | GPIO          |
+| GPIO13   | LCD_SCLK    | OUT  | SPI2_CLK      |
+| GPIO14   | LCD_CS      | OUT  | SPI2_CS       |
+| GPIO15   | LCD_RST     | OUT  |               |
+| GPIO16   | KEY1        | IN   |               |
+| GPIO17   | KEY2        | IN   |               |
+| GPIO18   | KEY3        | IN   |               |
+| GPIO19   | USB_D-      | IO   | USB           |
+| GPIO20   | USB_D+      | IO   | USB           |
+| GPIO21   | BUZZER      | OUT  | PWM           |
+| GPIO33   | IC_A6       | IO   |               |
+| GPIO34   | IC_A5       | IO   |               |
+| GPIO35   | IC_A4       | IO   |               |
+| GPIO36   | IC_A3       | IO   |               |
+| GPIO37   | IC_A2       | IO   |               |
+| GPIO38   | IC_A1       | IO   |               |
+| GPIO47   | IC_A7       | IO   |               |
+| GPIO48   | WS2812_LED  | OUT  | LED_STRIP_RMT |
+
+### SPI Flash Mode
+
+| Chan  | Label | Mode | Function |
+| ----- | ----- | ---- | -------- |
+| IC_A1 | CS    | OUT  | SPI_CS   |
+| IC_A2 | IO3   | IO   | SPI_IO3  |
+| IC_A3 | IO1   | IO   | SPI_IO1  |
+| IC_A4 | CLK   | OUT  | SPI_CLK  |
+| IC_A5 | IO2   | IO   | SPI_IO2  |
+| IC_A6 | IO0   | IO   | SPI_IO0  |
+
+### I2C EEPROM Mode
+
+| Chan  | Label | Mode | Function |
+| ----- | ----- | ---- | -------- |
+| IC_A1 | A0    | OUT  |          |
+| IC_A2 | WP    | OUT  |          |
+| IC_A3 | A1    | OUT  |          |
+| IC_A4 | SCL   | OUT  | I2C_SCL  |
+| IC_A5 | A2    | OUT  |          |
+| IC_A6 | SDA   | IO   | I2C_SDA  |
+
+### JTAG & SWD Mode
+
+| Chan  | Label | Mode | Function |
+| ----- | ----- | ---- | -------- |
+| IC_A1 | SWCLK | OUT  | SPI_CLK  |
+| IC_A2 | SWDIO | IO   | SPI_IO   |
+| IC_A3 | TDI   | IN   |          |
+| IC_A4 | TDO   | OUT  |          |
+| IC_A5 | RST   | OUT  |          |
+| IC_A6 | UTXD  | IO   | UART_TXD |
+| IC_A7 | URXD  | IO   | UART_RXD |
 
 ## References
 

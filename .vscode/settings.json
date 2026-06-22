@@ -4,7 +4,7 @@
   "idf.openOcdConfigs": [
     "board/esp32s3-builtin.cfg"
   ],
-  "idf.portWin": "COM4",
+  "idf.portWin": "COM5",
   "idf.currentSetup": "C:\\Users\\mjc\\esp\\v5.3\\esp-idf",
   "idf.customExtraVars": {
     "IDF_TARGET": "esp32s3"
@@ -14,5 +14,7 @@
     "--background-index",
     "--query-driver=**",
     "--compile-commands-dir=c:\\Users\\mjc\\proj\\OmniFlasher\\omni-flasher_fw\\omni-flasher\\build"
-  ]
+  ],
+  "idf.flashType": "UART",
+  "idf.flashBaudRate": "921600" // default: 460800
 }
