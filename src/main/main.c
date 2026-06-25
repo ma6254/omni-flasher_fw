@@ -17,6 +17,7 @@
 #include "utils.h"
 #include "board.h"
 #include "key.h"
+#include "buzzer.h"
 #include "lvgl_app.h"
 #include "lvgl_benchmark.h"
 
@@ -30,6 +31,8 @@ const size_t LED_COLOR_LIST_LEN =
     sizeof(led_color_list) / sizeof(led_color_list[0]);
 
 int led_color_list_index = -1;
+
+uint32_t led_color_time_cnt = 0;
 
 /*******************************************************************************
  * @brief 主函数，程序入口
@@ -77,22 +80,55 @@ void app_main(void)
     esp_task_wdt_add(NULL);
     board_init();
     key_init();
+    buzzer_init();
     lvgl_app_init();
     screen_init();
     // lv_demo_benchmark_init();
 
+    vTaskDelay(250 / portTICK_PERIOD_MS);
+
+    set_buzzer_io_on();
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    set_buzzer_io_off();
+
     // uint8_t key1_state = 0;
+    set_lcd_bl_on();
 
     while (1)
     {
         esp_task_wdt_reset();
         screen_loop_handler();
         key_task_handler();
+        buzzer_task_process();
         vTaskDelay(10 / portTICK_PERIOD_MS);
 
-        // led_color_list_index++;
-        // led_color_list_index%= LED_COLOR_LIST_LEN;
-        // led_color_t color = led_color_list[led_color_list_index];
-        // set_led_color(color);
+        if(led_color_time_cnt > 0)
+        {
+            led_color_time_cnt--;
+        }
+        else
+        {
+            led_color_time_cnt = 50;
+        }
+
+        if (led_color_time_cnt == 0)
+        {
+            led_color_list_index++;
+            led_color_list_index %= LED_COLOR_LIST_LEN;
+            led_color_t color = led_color_list[led_color_list_index];
+            set_led_color(color);
+
+            // if (led_color_list_index % 2 == 0)
+            // {
+            //     set_lcd_bl_on();
+            // }
+            // else
+            // {
+            //     set_lcd_bl_off();
+            // }
+
+            buzzer_set(100, 2, true);
+        }
+
     }
 }

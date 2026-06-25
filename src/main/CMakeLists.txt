@@ -5,6 +5,7 @@ file(
     ../components/*.c
     ../components/utils/*.c
     ../components/key/*.c
+    ../components/buzzer/*.c
     ../screens/*.c
 )
 
@@ -16,6 +17,7 @@ idf_component_register(
         ../components
         ../components/utils
         ../components/key
+        ../components/buzzer
         ../screens
     PRIV_REQUIRES
         esp_driver_gpio

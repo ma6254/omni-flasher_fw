@@ -4,6 +4,7 @@
 #include <driver/gpio.h>
 #include <freertos/FreeRTOS.h>
 #include <led_strip.h>
+#include <driver/ledc.h>
 
 /*******************************************************************************
  *

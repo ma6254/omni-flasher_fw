@@ -34,17 +34,23 @@ static volatile uint32_t screen_switch_flag = 0;
 uint32_t screen_encoder_sleep_flag = 0;
 uint32_t screen_encoder_activity_flag = 0;
 
-void set_lcd_bl_brightness(uint32_t brightness)
+void set_lcd_bl_pwm_duty(uint32_t duty)
 {
-    uint32_t duty = (uint32_t)((brightness * 1024) / SCREEN_BRIGHTNESS_MAX);
     ESP_ERROR_CHECK(ledc_set_duty(LEDC_LOW_SPEED_MODE, LCD_BL_LEDC_CHANNEL,
     duty)); ESP_ERROR_CHECK(ledc_update_duty(LEDC_LOW_SPEED_MODE,
     LCD_BL_LEDC_CHANNEL));
 }
 
+
+void set_lcd_bl_brightness(uint32_t brightness)
+{
+    uint32_t duty = (uint32_t)((brightness * 1024) / SCREEN_BRIGHTNESS_MAX);
+    set_lcd_bl_pwm_duty(duty);
+}
+
 void set_lcd_bl_on(void)
 {
-    set_lcd_bl_brightness(SCREEN_BRIGHTNESS_1);
+    set_lcd_bl_brightness(SCREEN_BRIGHTNESS_5);
 }
 
 // static void lv_tick_task(void *arg)
@@ -150,6 +156,7 @@ void lvgl_app_init(void)
         .hpoint = 0,
     };
     ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel));
+    set_lcd_bl_off();
 
     // SPI初始化
     const spi_bus_config_t SpiBusConfig = {
@@ -277,12 +284,11 @@ void screen_init(void)
     // ESP_ERROR_CHECK(esp_err);
 
     // DEBUG
-    set_lcd_on();
+    // set_lcd_on();
 
     ESP_ERROR_CHECK(lvgl_port_lock(portMAX_DELAY) ? ESP_OK : ESP_FAIL);
-    lv_obj_clean(lv_scr_act()); // 清空屏幕
-    lv_obj_set_style_bg_color(lv_scr_act(), lv_color_make(0x00, 0x00, 0xFF),
-                              0); // 背景色
+    lv_obj_clean(lv_scr_act());                                              // 清空屏幕
+    lv_obj_set_style_bg_color(lv_scr_act(), lv_color_white(), LV_PART_MAIN); // 背景色
     lvgl_port_unlock();
 
     esp_err = screen_switch(&startup_screen);

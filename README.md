@@ -72,9 +72,9 @@ lvgl_benchmark: =======================================
 | GPIO13   | LCD_SCLK    | OUT  | SPI2_CLK      |
 | GPIO14   | LCD_CS      | OUT  | SPI2_CS       |
 | GPIO15   | LCD_RST     | OUT  |               |
-| GPIO16   | KEY1        | IN   |               |
+| GPIO16   | KEY3        | IN   |               |
 | GPIO17   | KEY2        | IN   |               |
-| GPIO18   | KEY3        | IN   |               |
+| GPIO18   | KEY1        | IN   |               |
 | GPIO19   | USB_D-      | IO   | USB           |
 | GPIO20   | USB_D+      | IO   | USB           |
 | GPIO21   | BUZZER      | OUT  | PWM           |
@@ -86,6 +86,17 @@ lvgl_benchmark: =======================================
 | GPIO38   | IC_A1       | IO   |               |
 | GPIO47   | IC_A7       | IO   |               |
 | GPIO48   | WS2812_LED  | OUT  | LED_STRIP_RMT |
+
+### Display board interface define
+
+| GPIO   | Label   | NUM | NUM | Label   | GPIO   |
+| ------ | ------- | --- | --- | ------- | ------ |
+| GPIO15 | LCD_RST | 12  | 1   | LCD_SDA | GPIO11 |
+| GPIO48 | LED     | 10  | 9   | LCD_SCL | GPIO13 |
+| GPIO18 | K1      | 8   | 7   | LCD_CS  | GPIO14 |
+| GPIO17 | K2      | 6   | 5   | LCD_RS  | GPIO12 |
+| GPIO16 | K3      | 4   | 3   | LCD_BL  | GPIO9  |
+|        | 3V3     | 2   | 1   | GND     |        |
 
 ### SPI Flash Mode
 

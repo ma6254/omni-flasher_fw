@@ -48,6 +48,29 @@ void board_init(void)
 
     set_led_color(LED_COLOR_BLACK); // 黑色
 
+
+    // // 蜂鸣器PWM初始化
+    // ledc_timer_config_t ledc_timer = {
+    //     .speed_mode = LEDC_LOW_SPEED_MODE,
+    //     .duty_resolution = LEDC_TIMER_10_BIT,
+    //     .timer_num = BUZZER_LEDC_TIMER,
+    //     .freq_hz = BUZZER_LEDC_FREQ,
+    //     .clk_cfg = LEDC_AUTO_CLK,
+    // };
+    // ESP_ERROR_CHECK(ledc_timer_config(&ledc_timer));
+
+    // ledc_channel_config_t ledc_channel = {
+    //     .speed_mode = LEDC_LOW_SPEED_MODE,
+    //     .channel = BUZZER_LEDC_CHANNEL,
+    //     .timer_sel = BUZZER_LEDC_TIMER,
+    //     .intr_type = LEDC_INTR_DISABLE,
+    //     .gpio_num = BUZZER_GPIO,
+    //     .duty = 0, // Set duty to 50%
+    //     .hpoint = 0,
+    // };
+    // ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel));
+    // set_buzzer_io_off();
+
     ESP_LOGI(TAG, "init done");
 }
 
