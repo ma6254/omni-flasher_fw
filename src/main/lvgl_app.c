@@ -429,9 +429,9 @@ void screen_loop_handler(void)
 
 void lv_add_debug_border(lv_obj_t *obj)
 {
-    lv_obj_set_style_border_width(obj, 1, LV_PART_MAIN);
-    lv_obj_set_style_border_color(obj, lv_color_make(0xFF, 0x00, 0x00), LV_PART_MAIN);
-    lv_obj_set_style_border_opa(obj, LV_OPA_COVER, LV_PART_MAIN);
+    // lv_obj_set_style_border_width(obj, 1, LV_PART_MAIN);
+    // lv_obj_set_style_border_color(obj, lv_color_make(0xFF, 0x00, 0x00), LV_PART_MAIN);
+    // lv_obj_set_style_border_opa(obj, LV_OPA_COVER, LV_PART_MAIN);
 }
 
 void screen_set_load_anim(lv_screen_load_anim_t load_anim)

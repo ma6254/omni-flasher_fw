@@ -56,6 +56,8 @@ static main_menu_screen_item_cfg_t btn_cfg_list[MAIN_MENU_SCREEN_ENUM_COUNT] = {
     },
 };
 
+#define main_menu_screen_focus_buzz() (buzzer_set(50, 1, 0))
+
 // /*******************************************************************************
 //  * @brief 回调函数：按钮组
 //  * @param None
@@ -161,6 +163,8 @@ static void ui_set_item_focus(uint32_t index, bool anim_on)
             lv_anim_set_time(&focus_icon_anim, 500);
             lv_anim_start(&focus_icon_anim);
         }
+
+        // lv_obj_set_style_pad_all(prev_item_handle->btn, 0, LV_PART_MAIN);
     }
 
     {
@@ -197,6 +201,8 @@ static void ui_set_item_focus(uint32_t index, bool anim_on)
             lv_anim_set_time(&defocus_icon_anim, 500);
             lv_anim_start(&defocus_icon_anim);
         }
+
+        // lv_obj_set_style_pad_all(now_item_handle->btn, 5, LV_PART_MAIN);
     }
 
     prev_focused_index = index;
@@ -238,7 +244,7 @@ static void main_menu_screen_screen_event_handler(lv_event_t *e)
         //     return;
         // }
 
-        buzzer_set(50, 1, 0);
+        main_menu_screen_focus_buzz();
     }
     else if (code == LV_EVENT_DEFOCUSED)
     {
@@ -263,7 +269,7 @@ static void main_menu_screen_screen_event_handler(lv_event_t *e)
     }
     else if (code == LV_EVENT_CLICKED)
     {
-        buzzer_set(50, 1, 0);
+        main_menu_screen_focus_buzz();
 
         // lv_obj_set_parent(target, lv_scr_act()); // 将当前对象移动到屏幕的顶层
         // lv_obj_set_align(target, LV_ALIGN_CENTER);
@@ -364,24 +370,40 @@ static void main_menu_screen_init(lv_obj_t *parent)
         main_menu_screen_item_handle_t *item_handle = &item_handle_list[i];
 
         memset(item_handle, 0, sizeof(main_menu_screen_item_handle_t));
+        item_handle->cfg = item_cfg;
 
         lv_obj_t *btn = lv_btn_create(cont_col);
         {
-            lv_obj_set_size(btn, 200,30);
+            lv_obj_set_size(btn, 200, 30);
             lv_obj_set_align(btn, LV_ALIGN_RIGHT_MID);
             // lv_obj_add_event_cb(btn, btns_clicked_cb, LV_EVENT_CLICKED, (void *)i);
-            lv_group_add_obj(group, btn);
+
             lv_obj_add_event_cb(btn, main_menu_screen_screen_event_handler, LV_EVENT_ALL, (void *)i);
             lv_obj_set_style_outline_width(btn, 0, LV_PART_MAIN | LV_STATE_FOCUS_KEY);
             lv_obj_set_style_outline_opa(btn, LV_OPA_TRANSP, LV_PART_MAIN | LV_STATE_FOCUS_KEY);
             lv_add_debug_border(btn);
+            lv_group_add_obj(group, btn);
+
+            lv_obj_set_style_pad_all(btn, 0, LV_PART_MAIN);
         }
         item_handle->btn = btn;
-        item_handle->cfg = item_cfg;
+
+        lv_obj_t *item_cont = lv_obj_create(btn);
+        lv_obj_set_size(item_cont, lv_pct(100), lv_pct(100));
+        lv_obj_set_align(item_cont, LV_ALIGN_CENTER);
+        lv_obj_set_flex_flow(item_cont, LV_FLEX_FLOW_ROW);
+        lv_obj_set_flex_align(item_cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_SPACE_AROUND);
+        lv_obj_set_style_bg_opa(item_cont, LV_OPA_TRANSP, LV_PART_MAIN);
+        lv_obj_set_style_border_width(item_cont, 0, LV_PART_MAIN);
+        lv_obj_set_style_pad_all(item_cont, 0, LV_PART_MAIN);
+        lv_obj_set_style_radius(item_cont, 0, LV_PART_MAIN);
+        // lv_obj_set_style_width(item_cont, 20, LV_PART_SCROLLBAR);
+        lv_obj_set_scrollbar_mode(item_cont, LV_SCROLLBAR_MODE_OFF);
+        lv_add_debug_border(item_cont);
 
         if (item_cfg->icon != NULL)
         {
-            lv_obj_t *icon = lv_img_create(btn);
+            lv_obj_t *icon = lv_img_create(item_cont);
             {
                 lv_img_set_src(icon, item_cfg->icon);
                 lv_obj_set_size(icon, 80, 80);
@@ -394,12 +416,30 @@ static void main_menu_screen_init(lv_obj_t *parent)
             item_handle->icon_img = icon;
         }
 
-        lv_obj_t *label = lv_label_create(btn);
+        lv_obj_t *label_cont = lv_obj_create(item_cont);
+        lv_obj_set_size(label_cont, LV_SIZE_CONTENT, lv_pct(100));
+        lv_obj_set_align(label_cont, LV_ALIGN_CENTER);
+        lv_obj_set_style_bg_opa(label_cont, LV_OPA_TRANSP, LV_PART_MAIN);
+        lv_obj_set_style_border_width(label_cont, 0, LV_PART_MAIN);
+        lv_obj_set_style_pad_all(label_cont, 0, LV_PART_MAIN);
+        lv_obj_set_style_radius(label_cont, 0, LV_PART_MAIN);
+        // lv_obj_set_style_width(label_cont, 20, LV_PART_SCROLLBAR);
+        lv_obj_set_scrollbar_mode(label_cont, LV_SCROLLBAR_MODE_OFF);
+        lv_add_debug_border(label_cont);
+
+        lv_obj_t *label = lv_label_create(label_cont);
         {
+            lv_obj_set_size(label, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
             lv_label_set_text_fmt(label, "%s", item_cfg->name);
             lv_obj_center(label);
             // lv_obj_set_style_text_font(label, &main_font, LV_PART_MAIN);
             lv_add_debug_border(label);
+        }
+
+        if (item_cfg->icon != NULL)
+        {
+            lv_obj_set_flex_grow(item_handle->icon_img, 40);
+            lv_obj_set_flex_grow(label_cont, 60);
         }
 
         if (item_cfg->is_impled == false)

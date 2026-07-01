@@ -4,7 +4,7 @@
 #include "board.h"
 #include "buzzer.h"
 
-#define BUZZER_LEDC_FREQ (2700)            // 蜂鸣器频率，单位Hz
+#define BUZZER_LEDC_FREQ (4000)            // 蜂鸣器频率，单位Hz
 #define BUZZER_LEDC_TIMER LEDC_TIMER_2     // 蜂鸣器使用的LEDC定时器
 #define BUZZER_LEDC_CHANNEL LEDC_CHANNEL_2 // 蜂鸣器使用的LEDC通道
 

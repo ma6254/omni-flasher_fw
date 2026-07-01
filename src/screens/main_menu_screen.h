@@ -16,6 +16,7 @@ typedef struct
 typedef struct
 {
     main_menu_screen_item_cfg_t *cfg;
+    lv_obj_t *cont;
     lv_obj_t *btn;
     lv_obj_t *icon_img;
 } main_menu_screen_item_handle_t;

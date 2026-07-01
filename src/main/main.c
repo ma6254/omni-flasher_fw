@@ -150,7 +150,7 @@ void app_main(void)
     set_buzzer_io_on();
     vTaskDelay(250 / portTICK_PERIOD_MS);
     set_buzzer_io_off();
-    
+
     // uint8_t key1_state = 0;
     // set_lcd_bl_on();
 
