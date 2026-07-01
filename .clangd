@@ -1,2 +1,18 @@
 CompileFlags:
-    Remove: [-f*, -m*]
+  Remove: [-f*, -m*]
+
+  CompilationDatabase: "build"
+
+Completion:
+  HeaderInsertion: Never
+
+InlayHints: # 代码提示设置部分
+  Enabled: true # 启用代码提示
+  ParameterNames: true # 显示参数名称提示
+  DeducedTypes: true # 显示推断类型提示
+  Designators: true # 显示设计器提示
+
+Diagnostics:
+  # UnusedIncludes: Strict  # 严格检查（默认）
+  UnusedIncludes: None # 不检查
+  # UnusedIncludes: Macros  # 只检查宏

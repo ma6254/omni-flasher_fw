@@ -48,7 +48,7 @@ typedef enum
 #define SCREEN_BRIGHTNESS_MIN SCREEN_BRIGHTNESS_1
 #define SCREEN_BRIGHTNESS_MAX SCREEN_BRIGHTNESS_5
 
-typedef void (*screen_init_cb_t)(void);
+typedef void (*screen_init_cb_t)(lv_obj_t *parent);
 typedef void (*screen_deinit_cb_t)(void);
 typedef void (*screen_loop_cb_t)(void);
 
@@ -91,5 +91,7 @@ void screen_set_encoder_sleep_timer_period(uint32_t period);
 void screen_reset_encoder_sleep_timer_reset(void);
 
 void *screen_get_switch_user_data(void);
+void lv_add_debug_border(lv_obj_t *obj);
+void screen_set_load_anim(lv_screen_load_anim_t load_anim);
 
 #endif // LVGL_APP_H

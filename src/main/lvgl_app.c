@@ -9,7 +9,6 @@
 
 #include <lvgl.h>
 #include <esp_lvgl_port.h>
-#include "core/lv_group.h"
 #include "lvgl_app.h"
 // #include "config.h"
 
@@ -30,9 +29,12 @@ static screen_t *prev_screen = NULL;
 static screen_t *switch_screen_user_data = NULL;
 
 static volatile uint32_t screen_switch_flag = 0;
+static portMUX_TYPE screen_switch_mux = portMUX_INITIALIZER_UNLOCKED;
 
 uint32_t screen_encoder_sleep_flag = 0;
 uint32_t screen_encoder_activity_flag = 0;
+
+static int32_t screen_load_anim = -1; // lv_screen_load_anim_t
 
 void set_lcd_bl_pwm_duty(uint32_t duty)
 {
@@ -286,6 +288,7 @@ void screen_init(void)
     // DEBUG
     // set_lcd_on();
 
+
     ESP_ERROR_CHECK(lvgl_port_lock(portMAX_DELAY) ? ESP_OK : ESP_FAIL);
     lv_obj_clean(lv_scr_act());                                              // 清空屏幕
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_white(), LV_PART_MAIN); // 背景色
@@ -320,9 +323,11 @@ esp_err_t screen_switch_arg(const screen_t *screen, void *user_data)
     if (screen->loop_cb == NULL)
         return ESP_FAIL;
 
+    portENTER_CRITICAL(&screen_switch_mux);
     switch_screen_user_data = user_data;
     wait_switch_screen = (screen_t *)screen;
     screen_switch_flag = 1;
+    portEXIT_CRITICAL(&screen_switch_mux);
 
     // ESP_LOGI(TAG, "waiting switch_screen to %s", wait_switch_screen->name);
 
@@ -365,29 +370,46 @@ void screen_clear(void)
  ******************************************************************************/
 void screen_loop_handler(void)
 {
+    screen_t *next_screen = NULL;
+
+    portENTER_CRITICAL(&screen_switch_mux);
     if (screen_switch_flag)
     {
         screen_switch_flag = 0;
+        next_screen = wait_switch_screen;
+    }
+    portEXIT_CRITICAL(&screen_switch_mux);
+
+    if (next_screen)
+    {
+        lvgl_port_lock(portMAX_DELAY);
 
         if (current_screen != NULL)
         {
-            lvgl_port_lock(portMAX_DELAY);
-
             if (current_screen->deinit_cb)
                 current_screen->deinit_cb();
-
-            lvgl_port_unlock();
         }
 
         prev_screen = current_screen;
+        lv_obj_t *parent = lv_obj_create(NULL);
 
-        lvgl_port_lock(portMAX_DELAY);
-        wait_switch_screen->init_cb();
+        next_screen->init_cb(parent);
+
+        if (screen_load_anim >= 0)
+        {
+            lv_screen_load_anim(parent, screen_load_anim, 500, 0, true);
+            screen_load_anim = -1;
+        }
+        else
+        {
+            lv_screen_load(parent);
+        }
+
         lvgl_port_unlock();
 
         // ESP_LOGI(TAG, "switch_screen to %s", wait_switch_screen->name);
 
-        current_screen = (screen_t *)wait_switch_screen;
+        current_screen = next_screen;
     }
 
     if (current_screen == NULL)
@@ -403,4 +425,16 @@ void screen_loop_handler(void)
             lvgl_port_unlock();
         }
     }
+}
+
+void lv_add_debug_border(lv_obj_t *obj)
+{
+    lv_obj_set_style_border_width(obj, 1, LV_PART_MAIN);
+    lv_obj_set_style_border_color(obj, lv_color_make(0xFF, 0x00, 0x00), LV_PART_MAIN);
+    lv_obj_set_style_border_opa(obj, LV_OPA_COVER, LV_PART_MAIN);
+}
+
+void screen_set_load_anim(lv_screen_load_anim_t load_anim)
+{
+    screen_load_anim = load_anim;
 }

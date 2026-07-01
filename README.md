@@ -13,6 +13,23 @@ Note: Different models of ESP32S3 chips correspond to different types of PSRAM
 ### Build & Flash
 
 ```bash
+# convert images to C source code
+
+# startup_screen
+python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RAW -o ./assets/startup_screen/c ./assets/startup_screen/startup_gif.gif  
+
+
+# main_menu_screen
+python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/main_menu_screen/c ./assets/main_menu_screen/flash_icon.gif
+python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/main_menu_screen/c ./assets/main_menu_screen/serial_icon.gif
+python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/main_menu_screen/c ./assets/main_menu_screen/sd_card_icon.gif
+python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/main_menu_screen/c ./assets/main_menu_screen/settings_icon.gif
+python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/main_menu_screen/c ./assets/main_menu_screen/info_icon.gif
+python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/main_menu_screen/c ./assets/main_menu_screen/jtag_icon.gif
+
+```
+
+```bash
 pytest pytest_main.py -k test_hello_world --embedded-services esp,idf  --target esp32s3 --port COM4
 ```
 
@@ -135,3 +152,5 @@ lvgl_benchmark: =======================================
 ## References
 
 - **ESP32S3 Official Documentation** <https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/>
+- **LVGL Image Converter** <https://lvgl.io/tools/imageconverter>
+- **Google Fonts Icons** <https://fonts.google.com/icons>

@@ -5,6 +5,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <inttypes.h>
 #include "sdkconfig.h"
 #include "freertos/FreeRTOS.h"
@@ -14,6 +15,7 @@
 #include "esp_system.h"
 #include <esp_log.h>
 #include <esp_task_wdt.h>
+#include <driver/uart.h>
 #include "utils.h"
 #include "board.h"
 #include "key.h"
@@ -31,8 +33,66 @@ const size_t LED_COLOR_LIST_LEN =
     sizeof(led_color_list) / sizeof(led_color_list[0]);
 
 int led_color_list_index = -1;
+int ic_oe_index = -1;
 
 uint32_t led_color_time_cnt = 0;
+
+static char target_uart_rx_buf[1024] = {0};
+
+static esp_err_t target_uart_rx_process(TickType_t ticks_to_wait)
+{
+    BaseType_t xReturned;
+    uart_event_t event;
+    int rx_len = 0;
+
+    xReturned = xQueueReceive(target_uart_queue, &event, ticks_to_wait);
+    if (xReturned == pdFAIL)
+    {
+        return ESP_ERR_TIMEOUT; // 超时
+    }
+
+    target_uart_rx_buf[0] = 0;
+
+    switch (event.type)
+    {
+    case UART_DATA:
+    {
+        /***********************************************************************
+         * 处理接收到的UART数据
+         **********************************************************************/
+
+        // ESP_LOGI(TAG, "Received UART data");
+
+        // uart_flush_input(TAR_UART_PORT);
+
+        ESP_ERROR_CHECK(uart_get_buffered_data_len(TAR_UART_PORT, (size_t *)&rx_len));
+
+        // ESP_LOGI(TAG, "Received UART data len:%d", rx_len);
+
+        rx_len = uart_read_bytes(TAR_UART_PORT, target_uart_rx_buf, rx_len, 0);
+        if (rx_len == -1)
+        {
+            ESP_LOGW(TAG, "Failed to read UART data %d", event.type);
+            break;
+        }
+
+        uart_flush_input(TAR_UART_PORT);
+
+        target_uart_rx_buf[rx_len] = 0;
+        ESP_LOGI(TAG, "Received UART len:%d data:%s", rx_len, target_uart_rx_buf);
+        // print_quote_string((char *)target_uart_rx_buf);
+        // rx_len++;
+
+        // ESP_LOG_BUFFER_HEX_LEVEL(TAG, target_uart_rx_buf, rx_len, ESP_LOG_INFO);
+    }
+    break;
+    default:
+        ESP_LOGI(TAG, "Unhandled UART event: %d", event.type);
+        return ESP_ERR_INVALID_STATE;
+    }
+
+    return ESP_OK;
+}
 
 /*******************************************************************************
  * @brief 主函数，程序入口
@@ -84,15 +144,15 @@ void app_main(void)
     lvgl_app_init();
     screen_init();
     // lv_demo_benchmark_init();
-
+    
     vTaskDelay(250 / portTICK_PERIOD_MS);
-
+    
     set_buzzer_io_on();
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    vTaskDelay(250 / portTICK_PERIOD_MS);
     set_buzzer_io_off();
-
+    
     // uint8_t key1_state = 0;
-    set_lcd_bl_on();
+    // set_lcd_bl_on();
 
     while (1)
     {
@@ -113,10 +173,11 @@ void app_main(void)
 
         if (led_color_time_cnt == 0)
         {
-            led_color_list_index++;
-            led_color_list_index %= LED_COLOR_LIST_LEN;
-            led_color_t color = led_color_list[led_color_list_index];
-            set_led_color(color);
+            
+            // led_color_list_index++;
+            // led_color_list_index %= LED_COLOR_LIST_LEN;
+            // led_color_t color = led_color_list[led_color_list_index];
+            // set_led_color(color);
 
             // if (led_color_list_index % 2 == 0)
             // {
@@ -127,8 +188,28 @@ void app_main(void)
             //     set_lcd_bl_off();
             // }
 
-            buzzer_set(100, 2, true);
+            // ic_oe_index++;
+            // ic_oe_index %= 2;
+
+            // if(ic_oe_index == 0)
+            // {
+            //     set_ic_vcc_on();
+            //     set_jtag_vcc_off();
+            // }
+            // else
+            // {
+            //     set_ic_vcc_off();
+            //     set_jtag_vcc_on();
+            // }
+
+            // buzzer_set(100, 1, true);
+
+
+            // uart_wait_tx_done(TAR_UART_PORT, portMAX_DELAY);
+            // uart_write_bytes(TAR_UART_PORT, "hello\r\n", strlen("hello\r\n"));
         }
 
+        target_uart_rx_process(0);
     }
 }
+ 
