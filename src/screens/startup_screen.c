@@ -34,6 +34,12 @@ static void delay_open_timer_cb(lv_timer_t *timer)
     set_lcd_bl_on();
 }
 
+
+/*******************************************************************************
+ * @brief 回调函数：GIF播放完成事件处理
+ * @param None
+ * @return None
+ ******************************************************************************/
 static void startup_screen_gif_event_handler(lv_event_t *e)
 {
     lv_obj_t *gif_img = lv_event_get_target(e);
@@ -43,7 +49,12 @@ static void startup_screen_gif_event_handler(lv_event_t *e)
     lv_gif_restart(gif_img);
 }
 
-// lv_anim_exec_xcb_t
+/*******************************************************************************
+ * @brief 回调函数：顶部遮罩动画执行回调
+ * @param None
+ * @return None
+ * @ref lv_anim_exec_xcb_t
+ ******************************************************************************/
 static void top_mask_anime_exec_cb(lv_obj_t *obj, int32_t val)
 {
     lv_obj_set_style_bg_opa(obj, val, LV_PART_MAIN);
@@ -100,6 +111,7 @@ static void startup_screen_init(lv_obj_t *parent)
         lv_obj_set_style_bg_opa(top_mask, LV_OPA_COVER, LV_PART_MAIN);
         lv_obj_set_style_bg_color(top_mask, lv_color_black(), LV_PART_MAIN);
         lv_obj_set_style_border_width(top_mask, 0, LV_PART_MAIN);
+        lv_obj_set_style_radius(top_mask, 0, LV_PART_MAIN);
         lv_obj_clear_flag(top_mask, LV_OBJ_FLAG_SCROLLABLE);
         // lv_obj_set_style_pad_all(top_mask, 0, LV_PART_MAIN);
         lv_add_debug_border(top_mask);
