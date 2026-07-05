@@ -2,6 +2,7 @@
 #include "startup_screen.h"
 #include "main_menu_screen.h"
 #include "assets.h"
+#include "proj_config.h"
 
 static const char *TAG = "startup_screen";
 static lv_timer_t *startup_timer = NULL;
@@ -71,8 +72,8 @@ static void startup_screen_init(lv_obj_t *parent)
 
     ESP_LOGI(TAG, "initial begin");
 
-    lv_obj_set_style_bg_color(parent, lv_color_white(), 0); // 背景色
-    // lv_obj_set_style_bg_color(parent, lv_color_black(), 0); // 背景色
+    // lv_obj_set_style_bg_color(parent, lv_color_white(), 0); // 背景色
+    lv_obj_set_style_bg_color(parent, lv_color_black(), 0); // 背景色
 
     lv_obj_t *cont_col = lv_obj_create(parent);
     {
@@ -93,7 +94,11 @@ static void startup_screen_init(lv_obj_t *parent)
         lv_obj_align(startup_gif_img, LV_ALIGN_CENTER, 0, 0);
         // lv_obj_add_event_cb(startup_gif_img, startup_screen_gif_event_handler, LV_EVENT_READY, NULL);
         // lv_gif_set_src(startup_gif, &startup_gif_img_dsc);
+
+#if CFG_USE_STARTUP_GIF
         lv_gif_set_src(startup_gif_img, &startup_gif);
+#endif // CFG_USE_STARTUP_GIF
+
         lv_gif_set_loop_count(startup_gif_img, 0);
         // lv_gif_pause(startup_gif_img);
         // lv_gif_restart(startup_gif_img);

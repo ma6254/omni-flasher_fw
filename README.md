@@ -20,12 +20,15 @@ python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RAW -o .
 
 
 # main_menu_screen
-python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/main_menu_screen/c ./assets/main_menu_screen/flash_icon.gif
-python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/main_menu_screen/c ./assets/main_menu_screen/serial_icon.gif
-python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/main_menu_screen/c ./assets/main_menu_screen/sd_card_icon.gif
-python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/main_menu_screen/c ./assets/main_menu_screen/settings_icon.gif
-python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/main_menu_screen/c ./assets/main_menu_screen/info_icon.gif
-python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/main_menu_screen/c ./assets/main_menu_screen/jtag_icon.gif
+python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/main_menu_screen/c ./assets/main_menu_screen/flash_icon.png
+python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/main_menu_screen/c ./assets/main_menu_screen/serial_icon.png
+python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/main_menu_screen/c ./assets/main_menu_screen/jtag_icon.png
+python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/main_menu_screen/c ./assets/main_menu_screen/sd_card_icon.png
+python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/main_menu_screen/c ./assets/main_menu_screen/settings_icon.png
+python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/main_menu_screen/c ./assets/main_menu_screen/info_icon.png
+
+# settings_screen
+python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/settings_screen/c ./assets/settings_screen/sun_icon.png
 
 ```
 

@@ -365,7 +365,13 @@ static void btn_anime_exec_cb(lv_obj_t *obj, int32_t val)
     // lv_obj_align(obj, LV_ALIGN_CENTER, val, 0);
     lv_obj_set_width(obj, val);
 }
-    
+
+static void btn_bg_color_anime_exec_cb(void * var, int32_t value)
+{
+    lv_color_t color = lv_color_make(value >> 16, (value >> 8) & 0xFF, value & 0xFF);
+    lv_obj_set_style_bg_color(var, color, 0);
+}
+
 /*******************************************************************************
  * @brief 界面初始化
  * @param None
@@ -378,8 +384,9 @@ static void main_menu_screen_init(lv_obj_t *parent)
 
     ESP_LOGI(TAG, "initnal begin");
     
-    lv_obj_set_style_bg_color(parent, lv_color_white(), 0); // 背景色
-    
+    // lv_obj_set_style_bg_color(parent, lv_color_white(), 0); // 背景色
+    lv_obj_set_style_bg_color(parent, lv_color_make(0x2D, 0x43, 0x56), 0); // 背景色
+
     bool is_sub_screen_back = false;
     screen_t *prev_screen = screen_get_prev();
     if ((prev_screen == &settings_screen) || (prev_screen == &sys_info_screen))
@@ -427,7 +434,7 @@ static void main_menu_screen_init(lv_obj_t *parent)
     lv_obj_set_flex_align(cont_col, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_SPACE_AROUND);
     lv_obj_set_style_bg_opa(cont_col, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_border_width(cont_col, 0, LV_PART_MAIN);
-    // lv_obj_set_style_pad_right(cont_col, 40, LV_PART_MAIN);
+    lv_obj_set_style_pad_right(cont_col, 10, LV_PART_MAIN);
     // lv_obj_set_style_width(cont_col, 20, LV_PART_SCROLLBAR);
     lv_obj_set_scrollbar_mode(cont_col, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_scroll_snap_y(cont_col, LV_SCROLL_SNAP_CENTER);
@@ -464,6 +471,9 @@ static void main_menu_screen_init(lv_obj_t *parent)
             lv_obj_add_event_cb(btn, main_menu_screen_screen_event_handler, LV_EVENT_ALL, (void *)i);
             lv_obj_set_style_outline_width(btn, 0, LV_PART_MAIN | LV_STATE_FOCUS_KEY);
             lv_obj_set_style_outline_opa(btn, LV_OPA_TRANSP, LV_PART_MAIN | LV_STATE_FOCUS_KEY);
+            lv_obj_set_style_bg_color(btn, lv_color_make(255, 102, 0), LV_PART_MAIN);
+            lv_obj_set_style_radius(btn, 15, LV_PART_MAIN);
+            lv_obj_set_style_shadow_color(btn, lv_color_make(0, 0, 0), LV_PART_MAIN);
             lv_add_debug_border(btn);
             // lv_group_add_obj(group, btn);
 
@@ -527,6 +537,7 @@ static void main_menu_screen_init(lv_obj_t *parent)
             lv_label_set_text_fmt(label, "%s", item_handle->cfg->name);
             lv_obj_center(label);
             // lv_obj_set_style_text_font(label, &main_font, LV_PART_MAIN);
+            lv_obj_set_style_text_color(label, lv_color_make(255, 255, 255), LV_PART_MAIN);
             lv_add_debug_border(label);
         }
 

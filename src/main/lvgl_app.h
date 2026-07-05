@@ -48,6 +48,19 @@ typedef enum
 #define SCREEN_BRIGHTNESS_MIN SCREEN_BRIGHTNESS_1
 #define SCREEN_BRIGHTNESS_MAX SCREEN_BRIGHTNESS_5
 
+typedef enum
+{
+    KEY_MAP_NAV = 0,    // 导航模式
+    KEY_MAP_DIR_UD,     // 方向模式
+    KEY_MAP_DIR_LR,     // 方向模式
+    KEY_MAP_ENUM_COUNT, // 枚举计数
+} key_map_t;
+
+#define SCREEN_BRIGHTNESS_COUNT SCREEN_BRIGHTNESS_5
+
+#define SCREEN_BRIGHTNESS_MIN SCREEN_BRIGHTNESS_1
+#define SCREEN_BRIGHTNESS_MAX SCREEN_BRIGHTNESS_5
+
 typedef void (*screen_init_cb_t)(lv_obj_t *parent);
 typedef void (*screen_deinit_cb_t)(void);
 typedef void (*screen_loop_cb_t)(void);
@@ -70,6 +83,8 @@ typedef struct
  
 void set_lcd_bl_brightness(uint32_t brightness);
 void set_lcd_bl_on(void);
+
+void set_key_map_mode(key_map_t mode);
 
 #define set_lcd_bl_off() (set_lcd_bl_brightness(0))
 

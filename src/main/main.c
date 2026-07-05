@@ -20,6 +20,7 @@
 #include "board.h"
 #include "key.h"
 #include "buzzer.h"
+#include "config.h"
 #include "lvgl_app.h"
 #include "lvgl_benchmark.h"
 
@@ -138,6 +139,7 @@ void app_main(void)
     // esp_restart();
 
     esp_task_wdt_add(NULL);
+    config_init();
     board_init();
     key_init();
     buzzer_init();

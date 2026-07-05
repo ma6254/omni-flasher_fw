@@ -8,6 +8,7 @@ file(
   ../../assets/main_menu_screen/c/settings_icon.c
   ../../assets/main_menu_screen/c/info_icon.c
   ../../assets/main_menu_screen/c/jtag_icon.c
+  ../../assets/settings_screen/c/sun_icon.c
 )
 
 file(
@@ -18,6 +19,7 @@ file(
     ../components/utils/*.c
     ../components/key/*.c
     ../components/buzzer/*.c
+    ../components/config/*.c
     ../screens/*.c
 )
 
@@ -32,6 +34,7 @@ idf_component_register(
         ../components/utils
         ../components/key
         ../components/buzzer
+        ../components/config
         ../screens
     PRIV_REQUIRES
         esp_driver_gpio

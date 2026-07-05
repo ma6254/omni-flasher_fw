@@ -10,13 +10,15 @@
 #include <lvgl.h>
 #include <esp_lvgl_port.h>
 #include "lvgl_app.h"
-// #include "config.h"
+#include "config.h"
 
 #include "board.h"
 #include "misc/lv_color.h"
 #include "key.h"
 #include "portmacro.h"
 #include "startup_screen.h"
+#include "settings_screen.h"
+#include "proj_config.h"
 
 
 static const char *TAG = "lvgl_app";
@@ -27,6 +29,7 @@ static screen_t *current_screen = NULL;
 static screen_t *wait_switch_screen = NULL;
 static screen_t *prev_screen = NULL;
 static screen_t *switch_screen_user_data = NULL;
+static key_map_t current_key_map_mode = KEY_MAP_NAV;
 
 static volatile uint32_t screen_switch_flag = 0;
 static portMUX_TYPE screen_switch_mux = portMUX_INITIALIZER_UNLOCKED;
@@ -52,7 +55,12 @@ void set_lcd_bl_brightness(uint32_t brightness)
 
 void set_lcd_bl_on(void)
 {
-    set_lcd_bl_brightness(SCREEN_BRIGHTNESS_5);
+    set_lcd_bl_brightness(g_config_data.brightness);
+}
+
+void set_key_map_mode(key_map_t mode)
+{
+    current_key_map_mode = mode;
 }
 
 // static void lv_tick_task(void *arg)
@@ -79,6 +87,8 @@ void *screen_get_switch_user_data(void)
 static void lvgl_indev_keypad_cb(lv_indev_t *indev, lv_indev_data_t *data)
 {
     key_event_t key_event;
+    static uint32_t last_key = LV_KEY_ENTER;
+    static lv_indev_state_t last_state = LV_INDEV_STATE_RELEASED;
 
     // ESP_LOGI(TAG, "keypad read cb");
     // 这里应该读取实际的按键状态并填充data结构体
@@ -87,6 +97,11 @@ static void lvgl_indev_keypad_cb(lv_indev_t *indev, lv_indev_data_t *data)
     // data->key = ...; // 设置按键值，例如LV_KEY_ENTER, LV_KEY_UP等
 
     memset(&key_event, 0, sizeof(key_event_t));
+
+    /* 必须每次都返回当前状态，否则长按计时无法累计 */
+    data->key = last_key;
+    data->state = last_state;
+    data->continue_reading = false;
 
     BaseType_t xReturned = xQueueReceive(keys_event_queue, &key_event, 0);
     if(xReturned == pdFAIL)
@@ -102,27 +117,50 @@ static void lvgl_indev_keypad_cb(lv_indev_t *indev, lv_indev_data_t *data)
 
     if (key_event.state == KEY_STATE_PRESSED)
     {
-        data->state = LV_INDEV_STATE_PRESSED;
+        last_state = LV_INDEV_STATE_PRESSED;
     }
     else if (key_event.state == KEY_STATE_RELEASED)
     {
-        data->state = LV_INDEV_STATE_RELEASED;
+        last_state = LV_INDEV_STATE_RELEASED;
     }
     else
     {
-        data->state = LV_INDEV_STATE_RELEASED; // 默认状态
+        last_state = LV_INDEV_STATE_RELEASED; // 默认状态
     }
 
-    if(key_event.id == KEY_1)
-        data->key = LV_KEY_PREV; // 设置按键值，例如LV_KEY_ENTER, LV_KEY_UP等
-    else if(key_event.id == KEY_2)
-        data->key = LV_KEY_ENTER; // 设置按键值，例如LV_KEY_ENTER, LV_KEY_UP等
-    else if(key_event.id == KEY_3)
-        data->key = LV_KEY_NEXT; // 设置按键值，例如LV_KEY_ENTER, LV_KEY_UP等
+    if (current_key_map_mode == KEY_MAP_NAV)
+    {
+        if (key_event.id == KEY_1)
+            last_key = LV_KEY_PREV;
+        else if (key_event.id == KEY_2)
+            last_key = LV_KEY_ENTER;
+        else if (key_event.id == KEY_3)
+            last_key = LV_KEY_NEXT;
+    }
+    else if (current_key_map_mode == KEY_MAP_DIR_UD)
+    {
+        if (key_event.id == KEY_1)
+            last_key = LV_KEY_UP;
+        else if (key_event.id == KEY_2)
+            last_key = LV_KEY_ENTER;
+        else if (key_event.id == KEY_3)
+            last_key = LV_KEY_DOWN;
+    }
+    else if (current_key_map_mode == KEY_MAP_DIR_LR)
+    {
+        if (key_event.id == KEY_1)
+            last_key = LV_KEY_LEFT;
+        else if (key_event.id == KEY_2)
+            last_key = LV_KEY_ENTER;
+        else if (key_event.id == KEY_3)
+            last_key = LV_KEY_RIGHT;
+    }
 
     // ESP_LOGI(TAG, "Key %d state changed to %s", key_event.id,
     //          (key_event.state == KEY_STATE_PRESSED) ? "PRESSED" : "RELEASED");
 
+    data->key = last_key;
+    data->state = last_state;
     data->continue_reading = true;
 }
 
@@ -286,7 +324,7 @@ void screen_init(void)
     // ESP_ERROR_CHECK(esp_err);
 
     // DEBUG
-    // set_lcd_on();
+    set_lcd_on();
 
 
     ESP_ERROR_CHECK(lvgl_port_lock(portMAX_DELAY) ? ESP_OK : ESP_FAIL);
@@ -294,12 +332,12 @@ void screen_init(void)
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_white(), LV_PART_MAIN); // 背景色
     lvgl_port_unlock();
 
-    esp_err = screen_switch(&startup_screen);
-    ESP_ERROR_CHECK(esp_err);
+    // esp_err = screen_switch(&startup_screen);
+    // ESP_ERROR_CHECK(esp_err);
 
     // esp_err = screen_switch(&setting_screen);
-    // esp_err = screen_switch(&sysinfo_screen);
-    // ESP_ERROR_CHECK(esp_err);
+    esp_err = screen_switch(&settings_screen);
+    ESP_ERROR_CHECK(esp_err);
 }
 
 /*******************************************************************************
@@ -429,9 +467,11 @@ void screen_loop_handler(void)
 
 void lv_add_debug_border(lv_obj_t *obj)
 {
-    // lv_obj_set_style_border_width(obj, 1, LV_PART_MAIN);
-    // lv_obj_set_style_border_color(obj, lv_color_make(0xFF, 0x00, 0x00), LV_PART_MAIN);
-    // lv_obj_set_style_border_opa(obj, LV_OPA_COVER, LV_PART_MAIN);
+#if CFG_USE_DEBUG_BORDER
+    lv_obj_set_style_border_width(obj, 1, LV_PART_MAIN);
+    lv_obj_set_style_border_color(obj, lv_color_make(0xFF, 0x00, 0x00), LV_PART_MAIN);
+    lv_obj_set_style_border_opa(obj, LV_OPA_COVER, LV_PART_MAIN);
+#endif // CFG_USE_DEBUG_BORDER
 }
 
 void screen_set_load_anim(lv_screen_load_anim_t load_anim)
