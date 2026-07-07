@@ -134,34 +134,34 @@ static void ui_set_item_focus(uint32_t index, bool anim_on)
         main_menu_screen_item_handle_t *prev_item_handle = &item_handle_list[prev_focused_index];
 
         // 为当前项创建增加高度的动画
-        lv_anim_t focus_height_anim;
-        lv_anim_init(&focus_height_anim);
-        lv_anim_set_var(&focus_height_anim, prev_item);
-        lv_anim_set_exec_cb(&focus_height_anim, (lv_anim_exec_xcb_t)lv_obj_set_height);
-        lv_anim_set_values(&focus_height_anim, lv_obj_get_height(prev_item), 30);
-        lv_anim_set_path_cb(&focus_height_anim, lv_anim_path_overshoot);
-        lv_anim_set_time(&focus_height_anim, 500);
-        lv_anim_start(&focus_height_anim);
+        lv_anim_t defocus_height_anim;
+        lv_anim_init(&defocus_height_anim);
+        lv_anim_set_var(&defocus_height_anim, prev_item);
+        lv_anim_set_exec_cb(&defocus_height_anim, (lv_anim_exec_xcb_t)lv_obj_set_height);
+        lv_anim_set_values(&defocus_height_anim, lv_obj_get_height(prev_item), 30);
+        lv_anim_set_path_cb(&defocus_height_anim, lv_anim_path_overshoot);
+        lv_anim_set_time(&defocus_height_anim, 500);
+        lv_anim_start(&defocus_height_anim);
 
-        lv_anim_t focus_width_anim;
-        lv_anim_init(&focus_width_anim);
-        lv_anim_set_var(&focus_width_anim, prev_item);
-        lv_anim_set_exec_cb(&focus_width_anim, (lv_anim_exec_xcb_t)lv_obj_set_width);
-        lv_anim_set_values(&focus_width_anim, lv_obj_get_width(prev_item), 200);
-        lv_anim_set_path_cb(&focus_width_anim, lv_anim_path_overshoot);
-        lv_anim_set_time(&focus_width_anim, 500);
-        lv_anim_start(&focus_width_anim);
+        lv_anim_t defocus_width_anim;
+        lv_anim_init(&defocus_width_anim);
+        lv_anim_set_var(&defocus_width_anim, prev_item);
+        lv_anim_set_exec_cb(&defocus_width_anim, (lv_anim_exec_xcb_t)lv_obj_set_width);
+        lv_anim_set_values(&defocus_width_anim, lv_obj_get_width(prev_item), 200);
+        lv_anim_set_path_cb(&defocus_width_anim, lv_anim_path_overshoot);
+        lv_anim_set_time(&defocus_width_anim, 500);
+        lv_anim_start(&defocus_width_anim);
 
         if (prev_item_handle->icon_img != NULL)
         {
-            lv_anim_t focus_icon_anim;
-            lv_anim_init(&focus_icon_anim);
-            lv_anim_set_var(&focus_icon_anim, prev_item_handle->icon_img);
-            lv_anim_set_exec_cb(&focus_icon_anim, (lv_anim_exec_xcb_t)lv_image_set_scale);
-            lv_anim_set_values(&focus_icon_anim, lv_image_get_scale(prev_item_handle->icon_img), prev_item_handle->cfg->icon_scale_a);
-            lv_anim_set_path_cb(&focus_icon_anim, lv_anim_path_overshoot);
-            lv_anim_set_time(&focus_icon_anim, 500);
-            lv_anim_start(&focus_icon_anim);
+            lv_anim_t defocus_icon_anim;
+            lv_anim_init(&defocus_icon_anim);
+            lv_anim_set_var(&defocus_icon_anim, prev_item_handle->icon_img);
+            lv_anim_set_exec_cb(&defocus_icon_anim, (lv_anim_exec_xcb_t)lv_image_set_scale);
+            lv_anim_set_values(&defocus_icon_anim, lv_image_get_scale(prev_item_handle->icon_img), prev_item_handle->cfg->icon_scale_a);
+            lv_anim_set_path_cb(&defocus_icon_anim, lv_anim_path_overshoot);
+            lv_anim_set_time(&defocus_icon_anim, 500);
+            lv_anim_start(&defocus_icon_anim);
         }
 
         // lv_obj_set_style_pad_all(prev_item_handle->btn, 0, LV_PART_MAIN);
@@ -172,34 +172,34 @@ static void ui_set_item_focus(uint32_t index, bool anim_on)
         main_menu_screen_item_handle_t *now_item_handle = &item_handle_list[index];
 
         // 为当前项创建增加高度的动画
-        lv_anim_t defocus_height_anim;
-        lv_anim_init(&defocus_height_anim);
-        lv_anim_set_var(&defocus_height_anim, now_item);
-        lv_anim_set_exec_cb(&defocus_height_anim, (lv_anim_exec_xcb_t)lv_obj_set_height);
-        lv_anim_set_values(&defocus_height_anim, lv_obj_get_height(now_item), 100);
-        lv_anim_set_path_cb(&defocus_height_anim, lv_anim_path_overshoot);
-        lv_anim_set_time(&defocus_height_anim, 500);
-        lv_anim_start(&defocus_height_anim);
+        lv_anim_t focus_height_anim;
+        lv_anim_init(&focus_height_anim);
+        lv_anim_set_var(&focus_height_anim, now_item);
+        lv_anim_set_exec_cb(&focus_height_anim, (lv_anim_exec_xcb_t)lv_obj_set_height);
+        lv_anim_set_values(&focus_height_anim, lv_obj_get_height(now_item), 100);
+        lv_anim_set_path_cb(&focus_height_anim, lv_anim_path_overshoot);
+        lv_anim_set_time(&focus_height_anim, 500);
+        lv_anim_start(&focus_height_anim);
 
-        lv_anim_t defocus_width_anim;
-        lv_anim_init(&defocus_width_anim);
-        lv_anim_set_var(&defocus_width_anim, now_item);
-        lv_anim_set_exec_cb(&defocus_width_anim, (lv_anim_exec_xcb_t)lv_obj_set_width);
-        lv_anim_set_values(&defocus_width_anim, lv_obj_get_width(now_item), 270);
-        lv_anim_set_path_cb(&defocus_width_anim, lv_anim_path_overshoot);
-        lv_anim_set_time(&defocus_width_anim, 500);
-        lv_anim_start(&defocus_width_anim);
+        lv_anim_t focus_width_anim;
+        lv_anim_init(&focus_width_anim);
+        lv_anim_set_var(&focus_width_anim, now_item);
+        lv_anim_set_exec_cb(&focus_width_anim, (lv_anim_exec_xcb_t)lv_obj_set_width);
+        lv_anim_set_values(&focus_width_anim, lv_obj_get_width(now_item), 270);
+        lv_anim_set_path_cb(&focus_width_anim, lv_anim_path_overshoot);
+        lv_anim_set_time(&focus_width_anim, 500);
+        lv_anim_start(&focus_width_anim);
 
         if (now_item_handle->icon_img != NULL)
         {
-            lv_anim_t defocus_icon_anim;
-            lv_anim_init(&defocus_icon_anim);
-            lv_anim_set_var(&defocus_icon_anim, now_item_handle->icon_img);
-            lv_anim_set_exec_cb(&defocus_icon_anim, (lv_anim_exec_xcb_t)lv_image_set_scale);
-            lv_anim_set_values(&defocus_icon_anim, lv_image_get_scale(now_item_handle->icon_img), now_item_handle->cfg->icon_scale_b);
-            lv_anim_set_path_cb(&defocus_icon_anim, lv_anim_path_overshoot);
-            lv_anim_set_time(&defocus_icon_anim, 500);
-            lv_anim_start(&defocus_icon_anim);
+            lv_anim_t focus_icon_anim;
+            lv_anim_init(&focus_icon_anim);
+            lv_anim_set_var(&focus_icon_anim, now_item_handle->icon_img);
+            lv_anim_set_exec_cb(&focus_icon_anim, (lv_anim_exec_xcb_t)lv_image_set_scale);
+            lv_anim_set_values(&focus_icon_anim, lv_image_get_scale(now_item_handle->icon_img), now_item_handle->cfg->icon_scale_b);
+            lv_anim_set_path_cb(&focus_icon_anim, lv_anim_path_overshoot);
+            lv_anim_set_time(&focus_icon_anim, 500);
+            lv_anim_start(&focus_icon_anim);
         }
 
         // lv_obj_set_style_pad_all(now_item_handle->btn, 5, LV_PART_MAIN);

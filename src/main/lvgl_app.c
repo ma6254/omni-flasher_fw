@@ -41,11 +41,9 @@ static int32_t screen_load_anim = -1; // lv_screen_load_anim_t
 
 void set_lcd_bl_pwm_duty(uint32_t duty)
 {
-    ESP_ERROR_CHECK(ledc_set_duty(LEDC_LOW_SPEED_MODE, LCD_BL_LEDC_CHANNEL,
-    duty)); ESP_ERROR_CHECK(ledc_update_duty(LEDC_LOW_SPEED_MODE,
-    LCD_BL_LEDC_CHANNEL));
+    ESP_ERROR_CHECK(ledc_set_duty(LEDC_LOW_SPEED_MODE, LCD_BL_LEDC_CHANNEL, duty));
+    ESP_ERROR_CHECK(ledc_update_duty(LEDC_LOW_SPEED_MODE, LCD_BL_LEDC_CHANNEL));
 }
-
 
 void set_lcd_bl_brightness(uint32_t brightness)
 {
@@ -332,11 +330,9 @@ void screen_init(void)
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_white(), LV_PART_MAIN); // 背景色
     lvgl_port_unlock();
 
-    // esp_err = screen_switch(&startup_screen);
-    // ESP_ERROR_CHECK(esp_err);
-
+    esp_err = screen_switch(&startup_screen);
     // esp_err = screen_switch(&setting_screen);
-    esp_err = screen_switch(&settings_screen);
+    // esp_err = screen_switch(&settings_screen);
     ESP_ERROR_CHECK(esp_err);
 }
 

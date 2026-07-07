@@ -50,7 +50,8 @@ typedef enum
 
 typedef enum
 {
-    KEY_MAP_NAV = 0,    // 导航模式
+    KEY_MAP_NONE = 0,   // 禁用按键
+    KEY_MAP_NAV,        // 导航模式
     KEY_MAP_DIR_UD,     // 方向模式
     KEY_MAP_DIR_LR,     // 方向模式
     KEY_MAP_ENUM_COUNT, // 枚举计数

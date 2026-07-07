@@ -9,9 +9,12 @@
 static const char *TAG = "settings_screen";
 static bool is_first_focus = true;
 static bool is_editing_exit = false;
+static bool is_focus_repeat = false;
 static int32_t prev_focused_index = -1;
 static uint8_t brightness_level;
 static lv_group_t *main_group = NULL;
+static lv_obj_t *cont_col = NULL;
+static lv_obj_t *close_btn = NULL;
 // static lv_group_t *brightness_group = NULL;
 
 // static void brightness_indev_group_init(void);
@@ -45,26 +48,29 @@ static settings_screen_item_handle_t item_handle_list[SETTINGS_SCREEN_ENUM_COUNT
 static lv_obj_t *brightness_obj_list[SCREEN_BRIGHTNESS_COUNT];
 static lv_obj_t *brightness_cursor_obj_list[2];
 
-/*******************************************************************************
- * @brief 回调函数：按钮组
- * @param None
- * @return None
- ******************************************************************************/
-static void btns_clicked_cb(lv_event_t *event)
-{
-    uint32_t index = (uint32_t)lv_event_get_user_data(event);
+#define CLOSE_BTN_MINIMISE_SIZE 32 // 取消按键的最小化尺寸，单位：像素
+#define CLOSE_BTN_MAXIMISE_SIZE 50 // 取消按键的最大化尺寸，单位：像素
 
-    // printf("[main_screen] btns_clicked_cb index:%d\n", index);
-    ESP_LOGI(TAG, "btns_clicked_cb index:%" PRId32, index);
+// /*******************************************************************************
+//  * @brief 回调函数：按钮组
+//  * @param None
+//  * @return None
+//  ******************************************************************************/
+// static void btns_clicked_cb(lv_event_t *event)
+// {
+//     uint32_t index = (uint32_t)lv_event_get_user_data(event);
 
-    switch (index)
-    {
-    case SETTINGS_SCREEN_BRIGHTNESS:
-        break;
-    default:
-        return;
-    }
-}
+//     // printf("[main_screen] btns_clicked_cb index:%d\n", index);
+//     ESP_LOGI(TAG, "btns_clicked_cb index:%" PRId32, index);
+
+//     switch (index)
+//     {
+//     case SETTINGS_SCREEN_BRIGHTNESS:
+//         break;
+//     default:
+//         return;
+//     }
+// }
 
 static void ui_set_brightness_level(uint8_t level)
 {
@@ -91,6 +97,19 @@ static void ui_set_brightness_level(uint8_t level)
     }
 }
 
+static void ui_set_main_snap(lv_scroll_snap_t snap)
+{
+    if (cont_col == NULL)
+    {
+        ESP_LOGE(TAG, "ui_set_main_snap: cont_col is NULL");
+        return;
+    }
+
+    // ESP_LOGI(TAG, "ui_set_main_snap: snap:%" PRIu32, (uint32_t)snap);
+
+    lv_obj_set_scroll_snap_y(cont_col, snap);
+}
+
 /*******************************************************************************
  * @brief 回调函数：关闭按钮
  * @param None
@@ -98,9 +117,54 @@ static void ui_set_brightness_level(uint8_t level)
  ******************************************************************************/
 static void close_btn_clicked_cb(lv_event_t *event)
 {
-    buzzer_set(100, 1, 0);
+    buzzer_set(50, 1, 0);
     screen_set_load_anim(LV_SCREEN_LOAD_ANIM_OUT_RIGHT);
     screen_switch(&main_menu_screen);
+}
+
+/*******************************************************************************
+ * @brief 回调函数：取消按钮动画执行回调
+ * @param None
+ * @return None
+ * @ref lv_anim_exec_xcb_t
+ ******************************************************************************/
+static void close_btn_focus_anime_exec_cb(lv_obj_t *obj, int32_t val)
+{
+    // lv_obj_align(obj, LV_ALIGN_CENTER, val, 0);
+    lv_obj_set_width(obj, val);
+    lv_obj_set_height(obj, val);
+}
+
+static void ui_add_item_focus_anime(int32_t index, bool anim_on, lv_anim_completed_cb_t completed_cb)
+{
+    lv_obj_t *now_item = item_handle_list[index].btn;
+    if (now_item == NULL)
+    {
+        ESP_LOGE(TAG, "ui_set_item_focus: current item is NULL");
+        return;
+    }
+
+    // 为当前项创建增加高度的动画
+    lv_anim_t focus_height_anim;
+    lv_anim_init(&focus_height_anim);
+    lv_anim_set_var(&focus_height_anim, now_item);
+    lv_anim_set_exec_cb(&focus_height_anim, (lv_anim_exec_xcb_t)lv_obj_set_height);
+    lv_anim_set_values(&focus_height_anim, lv_obj_get_height(now_item), 100);
+    lv_anim_set_path_cb(&focus_height_anim, lv_anim_path_overshoot);
+    lv_anim_set_time(&focus_height_anim, 500);
+    lv_anim_set_completed_cb(&focus_height_anim, completed_cb);
+    
+    lv_anim_t focus_width_anim;
+    lv_anim_init(&focus_width_anim);
+    lv_anim_set_var(&focus_width_anim, now_item);
+    lv_anim_set_exec_cb(&focus_width_anim, (lv_anim_exec_xcb_t)lv_obj_set_width);
+    lv_anim_set_values(&focus_width_anim, lv_obj_get_width(now_item), 270);
+    lv_anim_set_path_cb(&focus_width_anim, lv_anim_path_overshoot);
+    lv_anim_set_time(&focus_width_anim, 500);
+    
+    
+    lv_anim_start(&focus_height_anim);
+    lv_anim_start(&focus_width_anim);
 }
 
 static void ui_set_item_focus(int32_t index, bool anim_on)
@@ -119,9 +183,32 @@ static void ui_set_item_focus(int32_t index, bool anim_on)
         return;
     }
 
+    if ((prev_focused_index < 0) && (index < 0))
+    {
+        return;
+    }
+
     if(prev_focused_index == index)
     {
         return;
+    }
+
+    // 之前是-1，现在切换到0，说明是从关闭按钮切换到第一个按钮
+    if (prev_focused_index < 0)
+    {
+        is_focus_repeat = true;
+        ui_set_main_snap(LV_SCROLL_SNAP_CENTER);
+        lv_group_focus_obj(item_handle_list[0].btn);
+
+        // 为当前项创建增加高度的动画
+        lv_anim_t close_btn_defocus_anim;
+        lv_anim_init(&close_btn_defocus_anim);
+        lv_anim_set_var(&close_btn_defocus_anim, close_btn);
+        lv_anim_set_exec_cb(&close_btn_defocus_anim, (lv_anim_exec_xcb_t)close_btn_focus_anime_exec_cb);
+        lv_anim_set_values(&close_btn_defocus_anim, lv_obj_get_height(close_btn), CLOSE_BTN_MINIMISE_SIZE);
+        lv_anim_set_path_cb(&close_btn_defocus_anim, lv_anim_path_overshoot);
+        lv_anim_set_time(&close_btn_defocus_anim, 500);
+        lv_anim_start(&close_btn_defocus_anim);
     }
 
     if ((prev_focused_index >= 0) && (prev_focused_index < SETTINGS_SCREEN_ENUM_COUNT))
@@ -161,39 +248,25 @@ static void ui_set_item_focus(int32_t index, bool anim_on)
 
     if (index < 0)
     {
-        prev_focused_index = -1;
-        return;
-    }
+        // ESP_LOGI(TAG, "ui_set_item_focus: index < 0");
+        ui_set_main_snap(LV_SCROLL_SNAP_START);
+        lv_group_focus_obj(NULL);
+        lv_obj_scroll_to_y(cont_col, 0, LV_ANIM_ON);
 
-    lv_obj_t *now_item = item_handle_list[index].btn;
-    if (now_item == NULL)
-    {
-        ESP_LOGE(TAG, "ui_set_item_focus: current item is NULL");
-        return;
+        // 为当前项创建增加高度的动画
+        lv_anim_t close_btn_focus_anim;
+        lv_anim_init(&close_btn_focus_anim);
+        lv_anim_set_var(&close_btn_focus_anim, close_btn);
+        lv_anim_set_exec_cb(&close_btn_focus_anim, (lv_anim_exec_xcb_t)close_btn_focus_anime_exec_cb);
+        lv_anim_set_values(&close_btn_focus_anim, lv_obj_get_height(close_btn), CLOSE_BTN_MAXIMISE_SIZE);
+        lv_anim_set_path_cb(&close_btn_focus_anim, lv_anim_path_overshoot);
+        lv_anim_set_time(&close_btn_focus_anim, 500);
+        lv_anim_start(&close_btn_focus_anim);
     }
 
     if (index >= 0)
     {
-        // 为当前项创建增加高度的动画
-        lv_anim_t focus_height_anim;
-        lv_anim_init(&focus_height_anim);
-        lv_anim_set_var(&focus_height_anim, now_item);
-        lv_anim_set_exec_cb(&focus_height_anim, (lv_anim_exec_xcb_t)lv_obj_set_height);
-        lv_anim_set_values(&focus_height_anim, lv_obj_get_height(now_item), 100);
-        lv_anim_set_path_cb(&focus_height_anim, lv_anim_path_overshoot);
-        lv_anim_set_time(&focus_height_anim, 500);
-        lv_anim_start(&focus_height_anim);
-
-        lv_anim_t focus_width_anim;
-        lv_anim_init(&focus_width_anim);
-        lv_anim_set_var(&focus_width_anim, now_item);
-        lv_anim_set_exec_cb(&focus_width_anim, (lv_anim_exec_xcb_t)lv_obj_set_width);
-        lv_anim_set_values(&focus_width_anim, lv_obj_get_width(now_item), 270);
-        lv_anim_set_path_cb(&focus_width_anim, lv_anim_path_overshoot);
-        lv_anim_set_time(&focus_width_anim, 500);
-        lv_anim_start(&focus_width_anim);
-
-        // lv_obj_set_style_pad_all(now_item_handle->btn, 5, LV_PART_MAIN);
+        ui_add_item_focus_anime(index, anim_on, NULL);
     }
 
     prev_focused_index = index;
@@ -210,6 +283,7 @@ static void close_btn_event_handler(lv_event_t *e)
 
     if (code == LV_EVENT_FOCUSED)
     {
+        buzzer_set(50, 1, 0);
         ui_set_item_focus(-1, true);
     }
 }
@@ -274,19 +348,24 @@ static void settings_screen_screen_event_handler(lv_event_t *e)
     lv_event_code_t code = lv_event_get_code(e);
     uint32_t index = (uint32_t)lv_event_get_user_data(e);
 
-    lv_group_t *group = lv_group_get_default();
-
     if (code == LV_EVENT_CLICKED)
     {
+        lv_group_t *group = lv_group_get_default();
+        if(group == NULL)
+        {
+            ESP_LOGE(TAG, "settings_screen_screen_event_handler: group is NULL");
+            return;
+        }
+
         if (is_editing_exit)
         {
             is_editing_exit = false;
             return;
         }
 
-        buzzer_set(100, 1, 0);
+        buzzer_set(50, 1, 0);
 
-        ESP_LOGI(TAG, "LV_EVENT_CLICKED");
+        // ESP_LOGI(TAG, "LV_EVENT_CLICKED");
 
         if (index == SETTINGS_SCREEN_BRIGHTNESS)
         {
@@ -294,30 +373,36 @@ static void settings_screen_screen_event_handler(lv_event_t *e)
 
             ESP_LOGI(TAG, "enter brightness edit mode");
 
-                lv_obj_clear_flag(brightness_cursor_obj_list[0], LV_OBJ_FLAG_HIDDEN);
-                lv_obj_clear_flag(brightness_cursor_obj_list[1], LV_OBJ_FLAG_HIDDEN);
+            lv_obj_clear_flag(brightness_cursor_obj_list[0], LV_OBJ_FLAG_HIDDEN);
+            lv_obj_clear_flag(brightness_cursor_obj_list[1], LV_OBJ_FLAG_HIDDEN);
 
-                lv_obj_remove_event_cb(item_handle->btn, settings_screen_screen_event_handler);
-                lv_obj_add_event_cb(item_handle->btn, brightness_btn_event_handler, LV_EVENT_ALL, (void *)index);
+            lv_obj_remove_event_cb(item_handle->btn, settings_screen_screen_event_handler);
+            lv_obj_add_event_cb(item_handle->btn, brightness_btn_event_handler, LV_EVENT_ALL, (void *)index);
 
-                // lv_group_set_default(brightness_group);
-                // lv_indev_set_group(screen_get_indev(), brightness_group);
-                // lv_group_set_editing(brightness_group, true);
-                // lv_group_focus_obj(item_handle->btn);
-                lv_group_set_editing(main_group, true);
-                set_key_map_mode(KEY_MAP_DIR_UD);
+            // lv_group_set_default(brightness_group);
+            // lv_indev_set_group(screen_get_indev(), brightness_group);
+            // lv_group_set_editing(brightness_group, true);
+            // lv_group_focus_obj(item_handle->btn);
+            lv_group_set_editing(main_group, true);
+            set_key_map_mode(KEY_MAP_DIR_UD);
         }
     }
     else if (code == LV_EVENT_PRESSED)
     {
-        ESP_LOGI(TAG, "pressed");
+        // ESP_LOGI(TAG, "pressed");
     }
     else if (code == LV_EVENT_LONG_PRESSED)
     {
-        ESP_LOGI(TAG, "long pressed");
+        // ESP_LOGI(TAG, "long pressed");
     }
     else if (code == LV_EVENT_FOCUSED)
     {
+        if(is_focus_repeat)
+        {
+            is_focus_repeat = false;
+            return;
+        }
+
         if (index >= SETTINGS_SCREEN_ENUM_COUNT)
         {
             ESP_LOGW(TAG, "LV_EVENT_FOCUSED invalid index: %" PRIu32, index);
@@ -331,7 +416,7 @@ static void settings_screen_screen_event_handler(lv_event_t *e)
         // }
 
         ui_set_item_focus(index, true);
-        buzzer_set(100, 1, 0);
+        buzzer_set(50, 1, 0);
     }
 }
 
@@ -357,9 +442,54 @@ static void indev_group_focus_init(void)
     ui_set_item_focus(SETTINGS_SCREEN_LANGUAGE, true);
 }
 
-static void parent_loaded_event_handler(lv_event_t *e)
+static void parent_loaded_anim_completed_cb(lv_anim_t *a)
 {
     indev_group_focus_init();
+
+    set_key_map_mode(KEY_MAP_NAV);
+}
+
+/*******************************************************************************
+ * @brief 回调函数：父容器加载完成事件处理
+ * @param e 事件对象
+ * @return None
+ * @ref lv_event_cb_t
+ ******************************************************************************/
+static void parent_loaded_event_handler(lv_event_t *e)
+{
+    ESP_LOGI(TAG, "parent_loaded_event_handler");
+
+    ui_add_item_focus_anime(0, true, parent_loaded_anim_completed_cb);
+
+    main_group = lv_group_create();
+    lv_group_set_editing(main_group, false);
+    lv_group_set_wrap(main_group, false);
+    lv_group_remove_all_objs(main_group);
+
+    if (close_btn == NULL)
+    {
+        ESP_LOGE(TAG, "parent_loaded_event_handler: close_btn is NULL");
+        return;
+    }
+
+    lv_group_add_obj(main_group, close_btn);
+    for (uint32_t i = 0; i < SETTINGS_SCREEN_ENUM_COUNT; i++)
+    {
+        settings_screen_item_handle_t *item_handle = &item_handle_list[i];
+
+        if (item_handle == NULL)
+        {
+            ESP_LOGE(TAG, "parent_loaded_event_handler: item_handle is NULL");
+            return;
+        }
+
+        lv_group_add_obj(main_group, item_handle->btn);
+    }
+
+    lv_group_set_default(main_group);
+    lv_indev_set_group(screen_get_indev(), main_group);
+
+    // set_key_map_mode(KEY_MAP_NAV);
 }
 
 /*******************************************************************************
@@ -375,6 +505,7 @@ static void settings_screen_init(lv_obj_t *parent)
     main_group = NULL;
     // brightness_group = NULL;
     is_editing_exit = false;
+    is_focus_repeat = false;
 
     memset(item_handle_list, 0, sizeof(item_handle_list));
     memset(brightness_obj_list, 0, sizeof(brightness_obj_list));
@@ -385,18 +516,15 @@ static void settings_screen_init(lv_obj_t *parent)
         lv_group_delete(lv_group_get_default());
     }
     lv_group_set_default(NULL);
+    lv_indev_set_group(screen_get_indev(), NULL);
 
-    main_group = lv_group_create();
-    lv_group_set_editing(main_group, false);
-    lv_group_set_wrap(main_group, false);
-    lv_group_remove_all_objs(main_group);
-    lv_indev_set_group(screen_get_indev(), main_group);
-    set_key_map_mode(KEY_MAP_NAV);
+    set_key_map_mode(KEY_MAP_NONE);
 
     // lv_obj_clean(parent); // 清空屏幕
 
     // lv_obj_set_style_bg_color(parent, lv_color_white(), 0); // 背景色
     lv_obj_set_style_bg_color(parent, lv_color_make(0x2D, 0x43, 0x56), 0); // 背景色
+    lv_obj_add_event_cb(parent, parent_loaded_event_handler, LV_EVENT_SCREEN_LOADED, NULL);
 
     // 顶级容器
     lv_obj_t *cont = lv_obj_create(parent);
@@ -429,7 +557,7 @@ static void settings_screen_init(lv_obj_t *parent)
     lv_obj_set_style_text_font(title_btn_label, &lv_font_montserrat_20, LV_PART_MAIN);
 
     // 关闭按钮
-    lv_obj_t *close_btn = lv_btn_create(parent);
+    close_btn = lv_btn_create(parent);
     lv_obj_add_event_cb(close_btn, close_btn_clicked_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_add_event_cb(close_btn, close_btn_event_handler, LV_EVENT_ALL, NULL);
     lv_obj_set_style_bg_color(close_btn, lv_color_make(0xFF, 0x00, 000), LV_PART_MAIN);
@@ -437,16 +565,18 @@ static void settings_screen_init(lv_obj_t *parent)
     lv_obj_set_style_shadow_width(close_btn, 0, LV_PART_MAIN);
     lv_obj_set_style_border_width(close_btn, 0, LV_PART_MAIN);
     lv_obj_set_align(close_btn, LV_ALIGN_TOP_LEFT);
-    lv_obj_set_size(close_btn, 32, 32);
+    lv_obj_set_size(close_btn, CLOSE_BTN_MINIMISE_SIZE, CLOSE_BTN_MINIMISE_SIZE);
+    lv_obj_set_style_outline_width(close_btn, 0, LV_PART_MAIN | LV_STATE_FOCUS_KEY);
+    lv_obj_set_style_outline_opa(close_btn, LV_OPA_TRANSP, LV_PART_MAIN | LV_STATE_FOCUS_KEY);
     lv_obj_t *close_btn_label = lv_label_create(close_btn);
     lv_label_set_text(close_btn_label, "<");
     lv_obj_center(close_btn_label);
+    // lv_group_add_obj(main_group, close_btn);
     // lv_obj_set_style_text_font(close_btn_label, &main_font, LV_PART_MAIN);
     lv_add_debug_border(close_btn);
-    lv_group_add_obj(main_group, close_btn);
 
     // 窗口内容器
-    lv_obj_t *cont_col = lv_obj_create(cont);
+    cont_col = lv_obj_create(cont);
     lv_obj_set_flex_grow(cont_col, 1);
     lv_obj_set_size(cont_col, lv_pct(100), LV_SIZE_CONTENT);
     lv_obj_set_align(cont_col, LV_ALIGN_CENTER);
@@ -456,7 +586,6 @@ static void settings_screen_init(lv_obj_t *parent)
     lv_obj_set_style_border_width(cont_col, 0, LV_PART_MAIN);
     lv_obj_set_style_radius(cont_col, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_right(cont_col, 10, LV_PART_MAIN);
-    lv_obj_set_scroll_snap_y(cont_col, LV_SCROLL_SNAP_CENTER);
     lv_obj_set_scrollbar_mode(cont_col, LV_SCROLLBAR_MODE_OFF);
     lv_add_debug_border(cont_col);
 
@@ -470,12 +599,14 @@ static void settings_screen_init(lv_obj_t *parent)
         lv_obj_t *btn = lv_btn_create(cont_col);
         item_handle->btn = btn;
         {
-            lv_obj_set_size(btn, 200, 30);
+            lv_obj_set_size(btn, 200, 45);
             lv_obj_set_align(btn, LV_ALIGN_CENTER);
             // lv_obj_add_event_cb(btn, btns_clicked_cb, LV_EVENT_CLICKED, (void *)i);
             lv_obj_add_event_cb(btn, settings_screen_screen_event_handler, LV_EVENT_ALL, (void *)i);
+            lv_obj_set_style_outline_width(btn, 0, LV_PART_MAIN | LV_STATE_FOCUS_KEY);
+            lv_obj_set_style_outline_opa(btn, LV_OPA_TRANSP, LV_PART_MAIN | LV_STATE_FOCUS_KEY);
+            // lv_group_add_obj(main_group, item_handle_list[i].btn);
             lv_add_debug_border(btn);
-            lv_group_add_obj(main_group, btn);
         }
 
         lv_obj_t *item_cont = lv_obj_create(btn);
@@ -491,8 +622,9 @@ static void settings_screen_init(lv_obj_t *parent)
             lv_obj_set_style_radius(item_cont, 0, LV_PART_MAIN);
             // lv_obj_set_style_width(item_cont, 20, LV_PART_SCROLLBAR);
             lv_obj_set_scrollbar_mode(item_cont, LV_SCROLLBAR_MODE_OFF);
+            lv_obj_set_scroll_snap_y(cont_col, LV_SCROLL_SNAP_CENTER);
             lv_add_debug_border(item_cont);
-        } 
+        }
 
         lv_obj_t *title_label_cont = lv_obj_create(item_cont);
         {
@@ -641,14 +773,13 @@ static void settings_screen_init(lv_obj_t *parent)
     }
 
     lv_obj_add_flag(brightness_cursor_obj_list[0], LV_OBJ_FLAG_HIDDEN);
-    lv_obj_add_flag( brightness_cursor_obj_list[1], LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(brightness_cursor_obj_list[1], LV_OBJ_FLAG_HIDDEN);
 
-    lv_group_set_default(main_group);
-    lv_group_focus_obj(item_handle_list[0].btn);
+    // lv_group_set_default(main_group);
+    // lv_group_focus_obj(item_handle_list[0].btn);
 
     // brightness_indev_group_init();
-
-    lv_obj_add_event_cb(parent, parent_loaded_event_handler, LV_EVENT_SCREEN_LOADED, NULL);
+    // ui_set_main_snap(LV_SCROLL_SNAP_CENTER);
 
     ESP_LOGI(TAG, "initnal success");
 }

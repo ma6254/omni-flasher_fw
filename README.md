@@ -38,6 +38,7 @@ pytest pytest_main.py -k test_hello_world --embedded-services esp,idf  --target 
 
 ```bash
 idf.py build
+idf.py erase-flash
 idf.py flash
 ```
 
