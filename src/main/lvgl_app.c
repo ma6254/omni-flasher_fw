@@ -10,6 +10,7 @@
 #include <lvgl.h>
 #include <esp_lvgl_port.h>
 #include "lvgl_app.h"
+#include "buzzer.h"
 #include "config.h"
 
 #include "board.h"
@@ -95,6 +96,20 @@ static void lvgl_indev_keypad_cb(lv_indev_t *indev, lv_indev_data_t *data)
     // data->key = ...; // 设置按键值，例如LV_KEY_ENTER, LV_KEY_UP等
 
     memset(&key_event, 0, sizeof(key_event_t));
+
+    // 在输入被临时禁用期间，强制输出“无按键且已释放”，避免初始化动画阶段误触发点击
+    if (current_key_map_mode == KEY_MAP_NONE)
+    {
+        key_event_t throwaway_event;
+        memset(&throwaway_event, 0, sizeof(throwaway_event));
+        (void)xQueueReceive(keys_event_queue, &throwaway_event, 0);
+
+        last_state = LV_INDEV_STATE_RELEASED;
+        data->key = 0;
+        data->state = LV_INDEV_STATE_RELEASED;
+        data->continue_reading = false;
+        return;
+    }
 
     /* 必须每次都返回当前状态，否则长按计时无法累计 */
     data->key = last_key;
@@ -323,6 +338,7 @@ void screen_init(void)
 
     // DEBUG
     set_lcd_on();
+    buzzer_set_enable(g_config_data.buzzer_enable);
 
 
     ESP_ERROR_CHECK(lvgl_port_lock(portMAX_DELAY) ? ESP_OK : ESP_FAIL);

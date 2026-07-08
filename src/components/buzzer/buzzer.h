@@ -64,6 +64,7 @@ typedef struct
 typedef struct BUZZER_HANDLE_T
 {
     buzzer_cfg_t cfg;
+    bool is_enabled;
     uint32_t time_cnt;
     uint32_t buzz_cnt;
     uint8_t step;
@@ -93,6 +94,7 @@ void buzzer_handle_process(buzzer_handle_t *handle);
 void buzzer_init(void);
 void buzzer_task_process(void);
 void buzzer_set(uint32_t dur_ms, uint32_t count, bool immed);
+void buzzer_set_enable(bool enable);
 
 #define set_buzzer_io_on() (buzzer_handle_io_write(&g_buzzer.handle, true))
 #define set_buzzer_io_off() (buzzer_handle_io_write(&g_buzzer.handle, false))

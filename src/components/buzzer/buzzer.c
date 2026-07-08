@@ -97,6 +97,12 @@ esp_err_t buzzer_handle_io_write(buzzer_handle_t *handle, bool state)
         return ESP_ERR_INVALID_ARG;
     }
 
+    // 蜂鸣器未启用
+    if(handle->is_enabled == false)
+    {
+        return ESP_ERR_INVALID_STATE; 
+    }
+
     if (handle->cfg.type == BUZZER_PASSIVE)
     {
 
@@ -180,6 +186,9 @@ esp_err_t buzzer_handle_set_param(buzzer_handle_t *handle, const buzzer_param_t 
 void buzzer_handle_process(buzzer_handle_t *handle)
 {
     if (handle == NULL)
+        return;
+
+    if (handle->is_enabled == false)
         return;
 
     // 如果有立即执行的请求，优先处理
@@ -283,6 +292,13 @@ void buzzer_task_process(void)
     buzzer_handle_process(&g_buzzer.handle);
 }
 
+/*******************************************************************************
+ * @brief 蜂鸣器参数设置函数
+ * @param dur_ms 蜂鸣器响起的时间，单位毫秒
+ * @param count  蜂鸣器响起的次数
+ * @param immed  是否立即更新参数
+ * @return None
+ ******************************************************************************/
 void buzzer_set(uint32_t dur_ms, uint32_t count, bool immed)
 {
     esp_err_t err;
@@ -297,5 +313,22 @@ void buzzer_set(uint32_t dur_ms, uint32_t count, bool immed)
     if (err != ESP_OK)
     {
         ESP_LOGE(TAG, "Failed to set buzzer parameters: %s", esp_err_to_name(err));
+    }
+}
+
+/*******************************************************************************
+ * @brief 蜂鸣器启用/禁用函数
+ * @param enable 是否启用蜂鸣器
+ * @return None
+ ******************************************************************************/
+void buzzer_set_enable(bool enable)
+{
+    g_buzzer.handle.is_enabled = enable;
+
+    if (enable == false)
+    {
+        buzzer_handle_io_write(&g_buzzer.handle, false); // 禁用时关闭蜂鸣器
+        memset(&g_buzzer.handle.pending_param, 0, sizeof(buzzer_param_t));
+        memset(&g_buzzer.handle.now_param, 0, sizeof(buzzer_param_t));
     }
 }
