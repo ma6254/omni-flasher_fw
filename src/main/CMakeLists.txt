@@ -9,6 +9,14 @@ file(
   ../../assets/main_menu_screen/c/info_icon.c
   ../../assets/main_menu_screen/c/jtag_icon.c
   ../../assets/settings_screen/c/sun_icon.c
+  ../../assets/fonts/c/main_menu_screen_item_font.c
+  ../../assets/fonts/c/settings_screen_item_font.c
+)
+
+file(
+  GLOB
+  TS_SRC_FILES
+  ../../translations/c/*.c
 )
 
 file(
@@ -27,9 +35,11 @@ idf_component_register(
     SRCS
         ${SRC_FILES}
         ${ASSETS_SRC_FILES}
+        ${TS_SRC_FILES}
     INCLUDE_DIRS
         .
         ../../assets
+        ../../translations/c
         ../components
         ../components/utils
         ../components/key

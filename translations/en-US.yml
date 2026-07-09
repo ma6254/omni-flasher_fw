@@ -1,0 +1,10 @@
+en-US:
+  main_menu_screen.serial: Serial
+  main_menu_screen.sys_info: SysInfo
+  main_menu_screen.settings: Settings
+  settings_screen.language: Language
+  settings_screen.brightness: Brightness
+  settings_screen.buzzer: Buzzer
+  settings_screen.info: SysInfo
+  settings_screen.about: About
+  settings_screen.startup_anim: Start Anime

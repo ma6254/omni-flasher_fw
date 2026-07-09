@@ -1,0 +1,10 @@
+zh-CN:
+  main_menu_screen.serial: 串口
+  main_menu_screen.sys_info: 系统信息
+  main_menu_screen.settings: 系统设置
+  settings_screen.language: 语言Language
+  settings_screen.brightness: 屏幕亮度设置
+  settings_screen.buzzer: 蜂鸣器设置
+  settings_screen.startup_anim: 开机动画设置
+  settings_screen.info: 系统信息
+  settings_screen.about: 关于

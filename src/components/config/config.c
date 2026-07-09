@@ -18,8 +18,15 @@ const char *config_buzzer_enable_names[] = {"OFF", "ON", NULL};
 
 // 语言
 const char *config_language_names[CONFIG_LANGUAGE_ENUM_COUNT + 1] = {
-    "ZH-CN",
-    "EN-US",
+    "EN-US", // CONFIG_LANGUAGE_EN_US
+    "ZH-CN", // CONFIG_LANGUAGE_CN_ZH
+    NULL,
+};
+
+// 语言
+const char *config_language_locale_list[CONFIG_LANGUAGE_ENUM_COUNT + 1] = {
+    "en-US", // CONFIG_LANGUAGE_EN_US
+    "zh-CN", // CONFIG_LANGUAGE_CN_ZH
     NULL,
 };
 
@@ -62,7 +69,7 @@ static void config_data_init(config_data_t *config_data)
 {
     memset(config_data, 0, sizeof(config_data_t));
 
-    config_data->language = CONFIG_LANGUAGE_CN_ZH;                       //
+    config_data->language = CONFIG_LANGUAGE_ZH_CN;                       //
     config_data->brightness = SCREEN_BRIGHTNESS_MAX;                     //
     config_data->buzzer_enable = 1;                                      //
     config_data->bl_off_timeout = CONFIG_BL_OFF_TIMEOUT_120S;            //

@@ -16,7 +16,7 @@ Note: Different models of ESP32S3 chips correspond to different types of PSRAM
 # convert images to C source code
 
 # startup_screen
-python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RAW -o ./assets/startup_screen/c ./assets/startup_screen/startup_gif.gif  
+python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RAW -o ./assets/startup_screen/c --name startup_gif ./assets/startup_screen/startup_1_gif.gif
 
 
 # main_menu_screen
@@ -30,6 +30,21 @@ python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8
 # settings_screen
 python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/settings_screen/c ./assets/settings_screen/sun_icon.png
 
+```
+
+i18n
+
+```bash
+npm install -g lv_i18n@latest
+
+lv_i18n extract -s './**/*.+(c|cpp|h|hpp)' -t 'translations/*.yml'
+lv_i18n compile -t 'translations/*.yml' -o ./translations/c -l en-US
+```
+
+font
+
+```bash
+npm install -g lv_font_conv@latest
 ```
 
 ```bash

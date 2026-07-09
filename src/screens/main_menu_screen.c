@@ -5,6 +5,7 @@
 #include "sys_info_screen.h"
 #include "buzzer.h"
 #include "assets.h"
+#include "lv_i18n.h"
 
 static const char *TAG = "main_menu_screen";
 static bool is_first_focus = true;
@@ -48,7 +49,7 @@ static const main_menu_screen_item_cfg_t btn_cfg_list[MAIN_MENU_SCREEN_ENUM_COUN
         .icon_scale_b = 92,
     },
     {
-        "SystemInfo",
+        "System Info",
         .is_impled = true,
         .icon = &info_icon,
         .icon_scale_a = 32,
@@ -57,6 +58,52 @@ static const main_menu_screen_item_cfg_t btn_cfg_list[MAIN_MENU_SCREEN_ENUM_COUN
 };
 
 #define main_menu_screen_focus_buzz() (buzzer_set(50, 1, 0))
+
+static bool ui_i18n_get_title_name(uint32_t index, char *out_buf, size_t buf_size)
+{
+    const char *str = NULL;
+    bool is_found = false;
+
+    if (index == MAIN_MENU_SCREEN_SERIAL)
+    {
+        str = _("main_menu_screen.serial");
+        is_found = true;
+    }
+    else if (index == MAIN_MENU_SCREEN_SETTINGS)
+    {
+        str = _("main_menu_screen.settings");
+        is_found = true;
+    }
+    else if (index == MAIN_MENU_SCREEN_SYS_INFO)
+    {
+        str = _("main_menu_screen.sys_info");
+        is_found = true;
+    }
+
+    // 不需要翻译
+    if (is_found == false)
+        return false;
+
+    if (str == NULL)
+    {
+        ESP_LOGE(TAG, "ui_i18n_get_title_name: translation not found for index %" PRIu32, index);
+        return false;
+    }
+
+    if (out_buf == NULL ||  buf_size == 0)
+    {
+        ESP_LOGE(TAG, "ui_i18n_get_title_name: invalid output buffer");
+        return false;
+    }
+
+    size_t str_len = strlen(str);
+
+    size_t real_len = (str_len < buf_size - 1) ? str_len : (buf_size - 1);
+    memcpy(out_buf, str, real_len);
+    out_buf[real_len] = '\0';
+
+    return true;
+}
 
 // /*******************************************************************************
 //  * @brief 回调函数：按钮组
@@ -381,6 +428,7 @@ static void main_menu_screen_init(lv_obj_t *parent)
 {
     prev_focused_index = -1;
     is_first_focus = true;
+    char title_buf[128];
 
     ESP_LOGI(TAG, "initnal begin");
     
@@ -534,9 +582,19 @@ static void main_menu_screen_init(lv_obj_t *parent)
         lv_obj_t *label = lv_label_create(label_cont);
         {
             lv_obj_set_size(label, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-            lv_label_set_text_fmt(label, "%s", item_handle->cfg->name);
+
+            memset(title_buf, 0, sizeof(title_buf));
+            if(ui_i18n_get_title_name(i, title_buf, sizeof(title_buf)) == true)
+            {
+                lv_label_set_text_fmt(label, "%s", title_buf);
+            }
+            else
+            {
+                lv_label_set_text_fmt(label, "%s", item_handle->cfg->name);
+            }
+
             lv_obj_center(label);
-            // lv_obj_set_style_text_font(label, &main_font, LV_PART_MAIN);
+            lv_obj_set_style_text_font(label, &main_menu_screen_item_font, LV_PART_MAIN);
             lv_obj_set_style_text_color(label, lv_color_make(255, 255, 255), LV_PART_MAIN);
             lv_add_debug_border(label);
         }

@@ -5,6 +5,7 @@
 #include "buzzer.h"
 #include "assets.h"
 #include "config.h"
+#include "lv_i18n.h"
 
 static const char *TAG = "settings_screen";
 static bool is_first_focus = true;
@@ -12,10 +13,12 @@ static bool is_editing_exit = false;
 static bool is_focus_repeat = false;
 static int32_t prev_focused_index = -1;
 static uint8_t brightness_level;
+static uint8_t curr_language_index;
 static lv_group_t *main_group = NULL;
 static lv_obj_t *cont_col = NULL;
 static lv_obj_t *close_btn = NULL;
 static lv_obj_t *buzzer_switch = NULL;
+static lv_obj_t *language_label = NULL;
 // static lv_group_t *brightness_group = NULL;
 
 // static void brightness_indev_group_init(void);
@@ -35,6 +38,10 @@ static const settings_screen_item_cfg_t btn_cfg_list[SETTINGS_SCREEN_ENUM_COUNT]
         .is_impled = true,
     },
     {
+        .name = "Startup Anim",
+        .is_impled = true,
+    },
+    {
         .name = "Info",
         .is_impled = true,
     },
@@ -49,8 +56,72 @@ static settings_screen_item_handle_t item_handle_list[SETTINGS_SCREEN_ENUM_COUNT
 static lv_obj_t *brightness_obj_list[SCREEN_BRIGHTNESS_COUNT];
 static lv_obj_t *brightness_cursor_obj_list[2];
 
+static lv_obj_t *language_cursor_obj_list[2];
+
 #define CLOSE_BTN_MINIMISE_SIZE 32 // 取消按键的最小化尺寸，单位：像素
 #define CLOSE_BTN_MAXIMISE_SIZE 50 // 取消按键的最大化尺寸，单位：像素
+
+
+static bool ui_i18n_get_title_name(uint32_t index, char *out_buf, size_t buf_size)
+{
+    const char *str = NULL;
+    bool is_found = false;
+
+    if (index == SETTINGS_SCREEN_LANGUAGE)
+    {
+        str = _("settings_screen.language");
+        is_found = true;
+    }
+    else if (index == SETTINGS_SCREEN_BRIGHTNESS)
+    {
+        str = _("settings_screen.brightness");
+        is_found = true;
+    }
+    else if (index == SETTINGS_SCREEN_BUZZER)
+    {
+        str = _("settings_screen.buzzer");
+        is_found = true;
+    }
+    else if (index == SETTINGS_SCREEN_START_ANIM)
+    {
+        str = _("settings_screen.startup_anim");
+        is_found = true;
+    }
+    else if (index == SETTINGS_SCREEN_INFO)
+    {
+        str = _("settings_screen.info");
+        is_found = true;
+    }
+    else if (index == SETTINGS_SCREEN_ABOUT)
+    {
+        str = _("settings_screen.about");
+        is_found = true;
+    }
+
+    // 不需要翻译
+    if (is_found == false)
+        return false;
+
+    if (str == NULL)
+    {
+        ESP_LOGE(TAG, "ui_i18n_get_title_name: translation not found for index %" PRIu32, index);
+        return false;
+    }
+
+    if (out_buf == NULL || buf_size == 0)
+    {
+        ESP_LOGE(TAG, "ui_i18n_get_title_name: invalid output buffer");
+        return false;
+    }
+
+    size_t str_len = strlen(str);
+
+    size_t real_len = (str_len < buf_size - 1) ? str_len : (buf_size - 1);
+    memcpy(out_buf, str, real_len);
+    out_buf[real_len] = '\0';
+
+    return true;
+}
 
 // /*******************************************************************************
 //  * @brief 回调函数：按钮组
@@ -150,7 +221,7 @@ static void ui_add_item_focus_anime(int32_t index, bool anim_on, lv_anim_complet
     lv_anim_init(&focus_height_anim);
     lv_anim_set_var(&focus_height_anim, now_item);
     lv_anim_set_exec_cb(&focus_height_anim, (lv_anim_exec_xcb_t)lv_obj_set_height);
-    lv_anim_set_values(&focus_height_anim, lv_obj_get_height(now_item), 100);
+    lv_anim_set_values(&focus_height_anim, lv_obj_get_height(now_item), 80);
     lv_anim_set_path_cb(&focus_height_anim, lv_anim_path_overshoot);
     lv_anim_set_time(&focus_height_anim, 500);
     lv_anim_set_completed_cb(&focus_height_anim, completed_cb);
@@ -284,8 +355,79 @@ static void close_btn_event_handler(lv_event_t *e)
 
     if (code == LV_EVENT_FOCUSED)
     {
+        ESP_LOGI(TAG, "close_btn_event_handler focused");
+
         buzzer_set(50, 1, 0);
         ui_set_item_focus(-1, true);
+    }
+}
+
+/*******************************************************************************
+ * @brief 回调函数：语言设置按钮事件处理
+ * @param None
+ * @return None
+ ******************************************************************************/
+static void language_btn_event_handler(lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    uint32_t index = (uint32_t)lv_event_get_user_data(e);
+    settings_screen_item_handle_t *item_handle = &item_handle_list[index];
+
+    if (code == LV_EVENT_KEY)
+    {
+
+        int32_t key = lv_indev_get_key(lv_indev_get_act());
+
+        if (key == LV_KEY_UP)
+        {
+            if (curr_language_index >= (CONFIG_LANGUAGE_ENUM_COUNT - 1))
+            {
+                curr_language_index = 0;
+            }
+            else
+            {
+                curr_language_index++;
+            }
+
+            buzzer_set(50, 1, 0);
+            lv_label_set_text_fmt(language_label, "%s", config_language_names[curr_language_index]);
+        }
+        else if (key == LV_KEY_DOWN)
+        {
+            if (curr_language_index == 0)
+            {
+                curr_language_index = CONFIG_LANGUAGE_ENUM_COUNT - 1;
+            }
+            else
+            {
+                curr_language_index--;
+            }
+
+            buzzer_set(50, 1, 0);
+            lv_label_set_text_fmt(language_label, "%s", config_language_names[curr_language_index]);
+        }
+        else if (key == LV_KEY_ENTER)
+        {
+            // 退出语言设置模式
+            // ESP_LOGI(TAG, "exit language edit mode");
+
+            buzzer_set(50, 1, 0);
+
+            lv_obj_add_flag(language_cursor_obj_list[0], LV_OBJ_FLAG_HIDDEN);
+            lv_obj_add_flag(language_cursor_obj_list[1], LV_OBJ_FLAG_HIDDEN);
+
+            lv_group_set_editing(main_group, true);
+            set_key_map_mode(KEY_MAP_NAV);
+
+            lv_obj_remove_event_cb(item_handle->btn, language_btn_event_handler);
+            lv_obj_add_event_cb(item_handle->btn, settings_screen_screen_event_handler, LV_EVENT_ALL, (void *)index);
+
+            lv_i18n_set_locale(config_language_locale_list[curr_language_index]);
+            g_config_data.language = curr_language_index;
+            config_save();
+
+            is_editing_exit = true;
+        }
     }
 }
 
@@ -373,7 +515,26 @@ static void settings_screen_screen_event_handler(lv_event_t *e)
 
         // ESP_LOGI(TAG, "LV_EVENT_CLICKED");
 
-        if (index == SETTINGS_SCREEN_BRIGHTNESS)
+        if (index == SETTINGS_SCREEN_LANGUAGE)
+        {
+            settings_screen_item_handle_t *item_handle = &item_handle_list[index];
+
+            ESP_LOGI(TAG, "enter language edit mode");
+
+            lv_obj_clear_flag(language_cursor_obj_list[0], LV_OBJ_FLAG_HIDDEN);
+            lv_obj_clear_flag(language_cursor_obj_list[1], LV_OBJ_FLAG_HIDDEN);
+
+            lv_obj_remove_event_cb(item_handle->btn, settings_screen_screen_event_handler);
+            lv_obj_add_event_cb(item_handle->btn, language_btn_event_handler, LV_EVENT_ALL, (void *)index);
+
+            // lv_group_set_default(language_group);
+            // lv_indev_set_group(screen_get_indev(), language_group);
+            // lv_group_set_editing(language_group, true);
+            // lv_group_focus_obj(item_handle->btn);
+            lv_group_set_editing(main_group, true);
+            set_key_map_mode(KEY_MAP_DIR_UD);
+        }
+        else if (index == SETTINGS_SCREEN_BRIGHTNESS)
         {
             settings_screen_item_handle_t *item_handle = &item_handle_list[index];
 
@@ -433,13 +594,14 @@ static void settings_screen_screen_event_handler(lv_event_t *e)
             return;
         }
 
-        // if (is_first_focus)
-        // {
-        //     is_first_focus = false;
-        //     return;
-        // }
-
         ui_set_item_focus(index, true);
+
+        if (is_first_focus)
+        {
+            is_first_focus = false;
+            return;
+        }
+
         buzzer_set(50, 1, 0);
     }
 }
@@ -513,7 +675,119 @@ static void parent_loaded_event_handler(lv_event_t *e)
     lv_group_set_default(main_group);
     lv_indev_set_group(screen_get_indev(), main_group);
 
+    lv_obj_add_event_cb(close_btn, close_btn_event_handler, LV_EVENT_ALL, NULL);
+
     // set_key_map_mode(KEY_MAP_NAV);
+}
+
+/*******************************************************************************
+ * @brief 语言设置项容器初始化
+ * @param None
+ * @return None
+ ******************************************************************************/
+static void language_item_btn_cont_init(void)
+{
+    settings_screen_item_handle_t *item_handle = &item_handle_list[SETTINGS_SCREEN_LANGUAGE];
+    ESP_ERROR_CHECK(item_handle != NULL ? ESP_OK : ESP_FAIL);
+
+    lv_obj_t *language_parent_obj = item_handle->cont;
+    ESP_ERROR_CHECK(language_parent_obj != NULL ? ESP_OK : ESP_FAIL);
+
+
+    lv_obj_t *item_cont = lv_obj_create(language_parent_obj);
+    {
+        lv_obj_set_flex_grow(item_cont, 1);
+        lv_obj_set_size(item_cont, lv_pct(100), LV_SIZE_CONTENT);
+        lv_obj_set_align(item_cont, LV_ALIGN_CENTER);
+        lv_obj_set_flex_flow(item_cont, LV_FLEX_FLOW_ROW);
+        lv_obj_set_flex_align(item_cont, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_SPACE_AROUND);
+        lv_obj_set_style_bg_opa(item_cont, LV_OPA_TRANSP, LV_PART_MAIN);
+        lv_obj_set_style_border_width(item_cont, 0, LV_PART_MAIN);
+        lv_obj_set_style_pad_all(item_cont, 0, LV_PART_MAIN);
+        lv_obj_set_style_radius(item_cont, 0, LV_PART_MAIN);
+        // lv_obj_set_style_width(item_cont, 20, LV_PART_SCROLLBAR);
+        lv_obj_set_scrollbar_mode(item_cont, LV_SCROLLBAR_MODE_OFF);
+        lv_add_debug_border(item_cont);
+    }
+
+    {
+        lv_obj_t *left_label_btn = lv_btn_create(item_cont);
+        {
+            lv_obj_set_size(left_label_btn, LV_SIZE_CONTENT, lv_pct(100));
+            lv_obj_set_align(left_label_btn, LV_ALIGN_CENTER);
+            // lv_obj_add_event_cb(left_label_btn, btns_clicked_cb, LV_EVENT_CLICKED, (void *)i);
+            // lv_obj_add_event_cb(left_label_btn, settings_screen_screen_event_handler, LV_EVENT_ALL, NULL);
+            lv_obj_set_style_pad_all(left_label_btn, 0, LV_PART_MAIN);
+            lv_obj_set_style_radius(left_label_btn, 0, LV_PART_MAIN);
+            lv_obj_set_style_bg_opa(left_label_btn, LV_OPA_TRANSP, LV_PART_MAIN);
+            lv_obj_set_style_shadow_width(left_label_btn, 0, LV_PART_MAIN);
+
+            lv_add_debug_border(left_label_btn);
+
+            lv_obj_t *label = lv_label_create(left_label_btn);
+            {
+                lv_obj_set_size(label, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+                lv_label_set_text_fmt(label, "<");
+                lv_obj_center(label);
+                lv_obj_set_style_text_font(label, &lv_font_montserrat_24, LV_PART_MAIN);
+                lv_add_debug_border(label);
+            }
+        }
+
+        language_cursor_obj_list[0] = left_label_btn;
+    }
+
+    {
+        lv_obj_t *language_label_btn = lv_btn_create(item_cont);
+        {
+            lv_obj_set_size(language_label_btn, LV_SIZE_CONTENT, lv_pct(100));
+            lv_obj_set_align(language_label_btn, LV_ALIGN_CENTER);
+            // lv_obj_add_event_cb(language_label_btn, btns_clicked_cb, LV_EVENT_CLICKED, (void *)i);
+            // lv_obj_add_event_cb(language_label_btn, settings_screen_screen_event_handler, LV_EVENT_ALL, NULL);
+            lv_obj_set_style_pad_all(language_label_btn, 0, LV_PART_MAIN);
+            lv_obj_set_style_radius(language_label_btn, 0, LV_PART_MAIN);
+            lv_obj_set_style_bg_opa(language_label_btn, LV_OPA_TRANSP, LV_PART_MAIN);
+            lv_obj_set_style_shadow_width(language_label_btn, 0, LV_PART_MAIN);
+            lv_add_debug_border(language_label_btn);
+
+            language_label = lv_label_create(language_label_btn);
+            {
+                lv_obj_set_size(language_label, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+                lv_label_set_text_fmt(language_label, "language_label");
+                lv_obj_center(language_label);
+                lv_obj_set_style_text_font(language_label, &lv_font_montserrat_24, LV_PART_MAIN);
+                lv_add_debug_border(language_label);
+            }
+
+            lv_label_set_text_fmt(language_label, "%s", config_language_names[curr_language_index]);
+        }
+    }
+
+    {
+        lv_obj_t *right_label_btn = lv_btn_create(item_cont);
+        {
+            lv_obj_set_size(right_label_btn, LV_SIZE_CONTENT, lv_pct(100));
+            lv_obj_set_align(right_label_btn, LV_ALIGN_CENTER);
+            // lv_obj_add_event_cb(right_label_btn, btns_clicked_cb, LV_EVENT_CLICKED, (void *)i);
+            // lv_obj_add_event_cb(right_label_btn, settings_screen_screen_event_handler, LV_EVENT_ALL, NULL);
+            lv_obj_set_style_pad_all(right_label_btn, 0, LV_PART_MAIN);
+            lv_obj_set_style_radius(right_label_btn, 0, LV_PART_MAIN);
+            lv_obj_set_style_bg_opa(right_label_btn, LV_OPA_TRANSP, LV_PART_MAIN);
+            lv_obj_set_style_shadow_width(right_label_btn, 0, LV_PART_MAIN);
+            lv_add_debug_border(right_label_btn);
+
+            lv_obj_t *label = lv_label_create(right_label_btn);
+            {
+                lv_obj_set_size(label, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+                lv_label_set_text_fmt(label, ">");
+                lv_obj_center(label);
+                lv_obj_set_style_text_font(label, &lv_font_montserrat_24, LV_PART_MAIN);
+                lv_add_debug_border(label);
+            }
+        }
+
+        language_cursor_obj_list[1] = right_label_btn;
+    }
 }
 
 /*******************************************************************************
@@ -526,14 +800,17 @@ static void settings_screen_init(lv_obj_t *parent)
     is_first_focus = true;
     prev_focused_index = -1;
     brightness_level = g_config_data.brightness;
+    curr_language_index = g_config_data.language;
     main_group = NULL;
     // brightness_group = NULL;
     is_editing_exit = false;
     is_focus_repeat = false;
+    char title_buf[128];
 
     memset(item_handle_list, 0, sizeof(item_handle_list));
     memset(brightness_obj_list, 0, sizeof(brightness_obj_list));
     memset(brightness_cursor_obj_list, 0, sizeof(brightness_cursor_obj_list));
+    memset(language_cursor_obj_list, 0, sizeof(language_cursor_obj_list));
 
     if (lv_group_get_default())
     {
@@ -574,15 +851,14 @@ static void settings_screen_init(lv_obj_t *parent)
     lv_obj_clear_flag(title_btn, LV_OBJ_FLAG_CLICKABLE);
     lv_add_debug_border(title_btn);
     lv_obj_t *title_btn_label = lv_label_create(title_btn);
-    lv_label_set_text(title_btn_label, "Settings");
+    lv_label_set_text(title_btn_label, _("main_menu_screen.settings"));
     lv_obj_center(title_btn_label);
     lv_add_debug_border(title_btn_label);
-    lv_obj_set_style_text_font(title_btn_label, &lv_font_montserrat_20, LV_PART_MAIN);
+    lv_obj_set_style_text_font(title_btn_label, &main_menu_screen_item_font, LV_PART_MAIN);
 
     // 关闭按钮
     close_btn = lv_btn_create(parent);
     lv_obj_add_event_cb(close_btn, close_btn_clicked_cb, LV_EVENT_CLICKED, NULL);
-    lv_obj_add_event_cb(close_btn, close_btn_event_handler, LV_EVENT_ALL, NULL);
     lv_obj_set_style_bg_color(close_btn, lv_color_make(0xFF, 0x00, 000), LV_PART_MAIN);
     lv_obj_set_style_radius(close_btn, 0, LV_PART_MAIN);
     lv_obj_set_style_shadow_width(close_btn, 0, LV_PART_MAIN);
@@ -619,6 +895,7 @@ static void settings_screen_init(lv_obj_t *parent)
         settings_screen_item_handle_t *item_handle = &item_handle_list[i];
         item_handle->cfg = &btn_cfg_list[i];
 
+        // 按钮
         lv_obj_t *btn = lv_btn_create(cont_col);
         item_handle->btn = btn;
         {
@@ -635,13 +912,14 @@ static void settings_screen_init(lv_obj_t *parent)
             lv_add_debug_border(btn);
         }
 
+        // 按钮内容器
         lv_obj_t *item_cont = lv_obj_create(btn);
         item_handle->cont = item_cont;
         {
             lv_obj_set_size(item_cont, lv_pct(100), lv_pct(100));
             lv_obj_set_align(item_cont, LV_ALIGN_CENTER);
             lv_obj_set_flex_flow(item_cont, LV_FLEX_FLOW_COLUMN);
-            lv_obj_set_flex_align(item_cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_SPACE_AROUND);
+            lv_obj_set_flex_align(item_cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_SPACE_AROUND);
             lv_obj_set_style_bg_opa(item_cont, LV_OPA_TRANSP, LV_PART_MAIN);
             lv_obj_set_style_border_width(item_cont, 0, LV_PART_MAIN);
             lv_obj_set_style_pad_all(item_cont, 0, LV_PART_MAIN);
@@ -652,7 +930,9 @@ static void settings_screen_init(lv_obj_t *parent)
             lv_add_debug_border(item_cont);
         }
 
+        // 按钮标题容器
         lv_obj_t *title_label_cont = lv_obj_create(item_cont);
+        item_handle->title_label_cont = title_label_cont;
         {
             lv_obj_set_flex_grow(title_label_cont, 0);
             lv_obj_set_size(title_label_cont, lv_pct(100), LV_SIZE_CONTENT);
@@ -666,15 +946,24 @@ static void settings_screen_init(lv_obj_t *parent)
             lv_add_debug_border(title_label_cont);
         }
 
+        // 按钮标题标签
         lv_obj_t *label = lv_label_create(title_label_cont);
         item_handle->title_label = label;
         {
             lv_obj_set_size(label, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-            lv_label_set_text_fmt(label, "%s", item_handle->cfg->name);
+            memset(title_buf, 0, sizeof(title_buf));
+            if (ui_i18n_get_title_name(i, title_buf, sizeof(title_buf)) == true)
+            {
+                lv_label_set_text_fmt(label, "%s", title_buf);
+            }
+            else
+            {
+                lv_label_set_text_fmt(label, "%s", item_handle->cfg->name);
+            }
             // lv_obj_center(label);
             lv_obj_set_align(label, LV_ALIGN_LEFT_MID);
             lv_obj_set_style_text_color(label, lv_color_make(255, 255, 255), LV_PART_MAIN);
-            lv_obj_set_style_text_font(label, &lv_font_montserrat_24, LV_PART_MAIN);
+            lv_obj_set_style_text_font(label, &settings_screen_item_font, LV_PART_MAIN);
             lv_add_debug_border(label);
         }
 
@@ -685,8 +974,7 @@ static void settings_screen_init(lv_obj_t *parent)
     }
 
     // 语言设置
-    {
-    }
+    language_item_btn_cont_init();
 
     // 屏幕亮度设置
     {
@@ -722,6 +1010,7 @@ static void settings_screen_init(lv_obj_t *parent)
                 lv_obj_set_style_pad_all(left_label_btn, 0, LV_PART_MAIN);
                 lv_obj_set_style_radius(left_label_btn, 0, LV_PART_MAIN);
                 lv_obj_set_style_bg_opa(left_label_btn, LV_OPA_TRANSP, LV_PART_MAIN);
+                lv_obj_set_style_shadow_width(left_label_btn, 0, LV_PART_MAIN);
                 lv_add_debug_border(left_label_btn);
 
                 lv_obj_t *label = lv_label_create(left_label_btn);
@@ -748,6 +1037,7 @@ static void settings_screen_init(lv_obj_t *parent)
                 lv_obj_set_style_pad_all(label_btn, 0, LV_PART_MAIN);
                 lv_obj_set_style_radius(label_btn, 0, LV_PART_MAIN);
                 lv_obj_set_style_bg_opa(label_btn, LV_OPA_TRANSP, LV_PART_MAIN);
+                lv_obj_set_style_shadow_width(label_btn, 0, LV_PART_MAIN);
                 lv_add_debug_border(label_btn);
             }
 
@@ -774,18 +1064,19 @@ static void settings_screen_init(lv_obj_t *parent)
         }
 
         {
-            lv_obj_t *left_label_btn = lv_btn_create(item_cont);
+            lv_obj_t *right_label_btn = lv_btn_create(item_cont);
             {
-                lv_obj_set_size(left_label_btn, LV_SIZE_CONTENT, lv_pct(100));
-                lv_obj_set_align(left_label_btn, LV_ALIGN_CENTER);
-                // lv_obj_add_event_cb(left_label_btn, btns_clicked_cb, LV_EVENT_CLICKED, (void *)i);
-                // lv_obj_add_event_cb(left_label_btn, settings_screen_screen_event_handler, LV_EVENT_ALL, NULL);
-                lv_obj_set_style_pad_all(left_label_btn, 0, LV_PART_MAIN);
-                lv_obj_set_style_radius(left_label_btn, 0, LV_PART_MAIN);
-                lv_obj_set_style_bg_opa(left_label_btn, LV_OPA_TRANSP, LV_PART_MAIN);
-                lv_add_debug_border(left_label_btn);
+                lv_obj_set_size(right_label_btn, LV_SIZE_CONTENT, lv_pct(100));
+                lv_obj_set_align(right_label_btn, LV_ALIGN_CENTER);
+                // lv_obj_add_event_cb(right_label_btn, btns_clicked_cb, LV_EVENT_CLICKED, (void *)i);
+                // lv_obj_add_event_cb(right_label_btn, settings_screen_screen_event_handler, LV_EVENT_ALL, NULL);
+                lv_obj_set_style_pad_all(right_label_btn, 0, LV_PART_MAIN);
+                lv_obj_set_style_radius(right_label_btn, 0, LV_PART_MAIN);
+                lv_obj_set_style_bg_opa(right_label_btn, LV_OPA_TRANSP, LV_PART_MAIN);
+                lv_obj_set_style_shadow_width(right_label_btn, 0, LV_PART_MAIN);
+                lv_add_debug_border(right_label_btn);
     
-                lv_obj_t *label = lv_label_create(left_label_btn);
+                lv_obj_t *label = lv_label_create(right_label_btn);
                 {
                     lv_obj_set_size(label, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
                     lv_label_set_text_fmt(label, ">");
@@ -794,7 +1085,7 @@ static void settings_screen_init(lv_obj_t *parent)
                     lv_add_debug_border(label);
                 }
 
-                brightness_cursor_obj_list[1] = left_label_btn;
+                brightness_cursor_obj_list[1] = right_label_btn;
             }
         }
 
@@ -806,10 +1097,13 @@ static void settings_screen_init(lv_obj_t *parent)
         settings_screen_item_handle_t *item_handle = &item_handle_list[SETTINGS_SCREEN_BUZZER];
         ESP_ERROR_CHECK(item_handle != NULL ? ESP_OK : ESP_FAIL);
 
+        lv_obj_set_flex_flow(item_handle->cont, LV_FLEX_FLOW_ROW);
+        lv_obj_set_size( item_handle->title_label_cont, LV_SIZE_CONTENT, lv_pct(100));
+
         lv_obj_t *item_cont = lv_obj_create(item_handle->cont);
         {
             lv_obj_set_flex_grow(item_cont, 1);
-            lv_obj_set_size(item_cont, lv_pct(100), LV_SIZE_CONTENT);
+            lv_obj_set_size(item_cont, lv_pct(100), lv_pct(100));
             lv_obj_set_align(item_cont, LV_ALIGN_CENTER);
             lv_obj_set_flex_flow(item_cont, LV_FLEX_FLOW_ROW);
             lv_obj_set_flex_align(item_cont, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_SPACE_AROUND);
@@ -823,6 +1117,8 @@ static void settings_screen_init(lv_obj_t *parent)
         }
 
         buzzer_switch = lv_switch_create(item_cont);
+        lv_obj_set_size(buzzer_switch, 50, 22);
+        lv_add_debug_border(buzzer_switch);
 
         if(g_config_data.buzzer_enable)
         {
@@ -836,6 +1132,9 @@ static void settings_screen_init(lv_obj_t *parent)
 
     lv_obj_add_flag(brightness_cursor_obj_list[0], LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(brightness_cursor_obj_list[1], LV_OBJ_FLAG_HIDDEN);
+
+    lv_obj_add_flag(language_cursor_obj_list[0], LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(language_cursor_obj_list[1], LV_OBJ_FLAG_HIDDEN);
 
     // lv_group_set_default(main_group);
     // lv_group_focus_obj(item_handle_list[0].btn);

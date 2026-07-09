@@ -72,8 +72,8 @@ static void startup_screen_init(lv_obj_t *parent)
 
     ESP_LOGI(TAG, "initial begin");
 
-    // lv_obj_set_style_bg_color(parent, lv_color_white(), 0); // 背景色
-    lv_obj_set_style_bg_color(parent, lv_color_black(), 0); // 背景色
+    lv_obj_set_style_bg_color(parent, lv_color_white(), 0); // 背景色
+    // lv_obj_set_style_bg_color(parent, lv_color_black(), 0); // 背景色
 
     lv_obj_t *cont_col = lv_obj_create(parent);
     {
@@ -92,20 +92,28 @@ static void startup_screen_init(lv_obj_t *parent)
     startup_gif_img = lv_gif_create(cont_col);
     {
         lv_obj_align(startup_gif_img, LV_ALIGN_CENTER, 0, 0);
-        // lv_obj_add_event_cb(startup_gif_img, startup_screen_gif_event_handler, LV_EVENT_READY, NULL);
+        lv_obj_add_event_cb(startup_gif_img, startup_screen_gif_event_handler, LV_EVENT_READY, NULL);
         // lv_gif_set_src(startup_gif, &startup_gif_img_dsc);
 
 #if CFG_USE_STARTUP_GIF
         lv_gif_set_src(startup_gif_img, &startup_gif);
 #endif // CFG_USE_STARTUP_GIF
 
-        lv_gif_set_loop_count(startup_gif_img, 0);
+        // lv_gif_set_loop_count(startup_gif_img, 0);
         // lv_gif_pause(startup_gif_img);
         // lv_gif_restart(startup_gif_img);
         // lv_image_set_scale(startup_gif_img, 305);
+        lv_gif_set_loop_count(startup_gif_img, 1);
         lv_add_debug_border(startup_gif_img);
-    }
 
+        if(lv_gif_is_loaded(startup_gif_img)) {
+            ESP_LOGI(TAG, "gif loaded successfully");
+        }
+        else {
+            ESP_LOGW(TAG, "gif loaded failed");
+        }
+    }
+    
     lv_obj_t *top_mask = lv_obj_create(parent);
     {
         lv_obj_set_flex_grow(top_mask, 1);
@@ -134,7 +142,7 @@ static void startup_screen_init(lv_obj_t *parent)
         lv_anim_start(&top_mask_anim);
     }
 
-    startup_timer = lv_timer_create(startup_timer_cb, 3000, NULL);
+    startup_timer = lv_timer_create(startup_timer_cb, 10000, NULL);
     lv_timer_pause(startup_timer);
     lv_timer_reset(startup_timer);
     lv_timer_resume(startup_timer);

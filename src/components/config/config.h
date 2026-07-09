@@ -31,15 +31,6 @@ typedef struct
 // 自动熄屏
 typedef enum
 {
-    CONFIG_INCLK_FREQ_10MHZ = 0,
-    CONFIG_INCLK_FREQ_11_2896MHZ,
-    CONFIG_INCLK_FREQ_12_288MHZ,
-    CONFIG_INCLK_FREQ_ENUM_COUNT,
-} config_in_clk_freq_t;
-
-// 自动熄屏
-typedef enum
-{
     CONFIG_BL_OFF_TIMEOUT_OFF = 0,
     CONFIG_BL_OFF_TIMEOUT_10S,
     CONFIG_BL_OFF_TIMEOUT_30S,
@@ -70,12 +61,13 @@ typedef enum
 // 语言
 typedef enum
 {
-    CONFIG_LANGUAGE_CN_ZH = 0, // 中文，简体
-    CONFIG_LANGUAGE_EN_US,     // 英文
+    CONFIG_LANGUAGE_EN_US = 0, // 英文
+    CONFIG_LANGUAGE_ZH_CN,     // 中文，简体
     CONFIG_LANGUAGE_ENUM_COUNT // 枚举数量
 } config_language_t;
 
 extern const char *config_language_names[CONFIG_LANGUAGE_ENUM_COUNT + 1];
+extern const char *config_language_locale_list[CONFIG_LANGUAGE_ENUM_COUNT + 1];
 extern const char *config_bl_off_timeout_setting_names[CONFIG_BL_OFF_TIMEOUT_ENUM_COUNT + 1];
 extern const char *config_screen_lock_timeout_setting_names[CONFIG_SCREEN_LOCK_TIMEOUT_ENUM_COUNT + 1];
 extern const char *config_other_screen_timeout_setting_names[CONFIG_OTHER_SCREEN_TIMEOUT_ENUM_COUNT + 1];

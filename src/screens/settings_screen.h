@@ -18,6 +18,7 @@ typedef struct
     lv_obj_t *cont;
     lv_obj_t *btn;
     lv_obj_t *title_label;
+    lv_obj_t *title_label_cont;
 } settings_screen_item_handle_t;
 
 typedef enum
@@ -25,6 +26,7 @@ typedef enum
     SETTINGS_SCREEN_LANGUAGE = 0, // 语言设置
     SETTINGS_SCREEN_BRIGHTNESS,   // 屏幕亮度设置
     SETTINGS_SCREEN_BUZZER,       // 蜂鸣器设置
+    SETTINGS_SCREEN_START_ANIM,   // 开机动画设置
     SETTINGS_SCREEN_INFO,         // 设备信息
     SETTINGS_SCREEN_ABOUT,        // 关于
     SETTINGS_SCREEN_ENUM_COUNT,   // 枚举个数

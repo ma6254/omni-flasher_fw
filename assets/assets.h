@@ -17,4 +17,7 @@ LV_IMG_DECLARE(jtag_icon);
 
 LV_IMG_DECLARE(sun_icon);
 
+LV_FONT_DECLARE(main_menu_screen_item_font);
+LV_FONT_DECLARE(settings_screen_item_font);
+
 #endif // ASSETS_H

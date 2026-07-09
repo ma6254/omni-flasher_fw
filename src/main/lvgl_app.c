@@ -12,6 +12,7 @@
 #include "lvgl_app.h"
 #include "buzzer.h"
 #include "config.h"
+#include "lv_i18n.h"
 
 #include "board.h"
 #include "misc/lv_color.h"
@@ -310,6 +311,10 @@ void lvgl_app_init(void)
     lv_indev_set_group(gLvIndev, group);
 
     lvgl_port_unlock();
+    
+    lv_i18n_init(lv_i18n_language_pack);
+    lv_i18n_set_locale(config_language_locale_list[g_config_data.language]);
+
     ESP_LOGI(TAG, "lvgl_app_init");
 }
 
@@ -346,9 +351,9 @@ void screen_init(void)
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_white(), LV_PART_MAIN); // 背景色
     lvgl_port_unlock();
 
-    esp_err = screen_switch(&startup_screen);
+    // esp_err = screen_switch(&startup_screen);
     // esp_err = screen_switch(&setting_screen);
-    // esp_err = screen_switch(&settings_screen);
+    esp_err = screen_switch(&settings_screen);
     ESP_ERROR_CHECK(esp_err);
 }
 
