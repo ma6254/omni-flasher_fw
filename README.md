@@ -20,12 +20,18 @@ python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RAW -o .
 
 
 # main_menu_screen
+python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/main_menu_screen/c ./assets/main_menu_screen/remote_icon.png
 python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/main_menu_screen/c ./assets/main_menu_screen/flash_icon.png
 python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/main_menu_screen/c ./assets/main_menu_screen/serial_icon.png
 python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/main_menu_screen/c ./assets/main_menu_screen/jtag_icon.png
 python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/main_menu_screen/c ./assets/main_menu_screen/sd_card_icon.png
 python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/main_menu_screen/c ./assets/main_menu_screen/settings_icon.png
 python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/main_menu_screen/c ./assets/main_menu_screen/info_icon.png
+
+# remote_screen
+python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/remote_screen/c ./assets/remote_screen/usb_icon.png
+python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/remote_screen/c ./assets/remote_screen/wifi_icon.png
+python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/remote_screen/c ./assets/remote_screen/flashrom_logo.png
 
 # settings_screen
 python managed_components/lvgl__lvgl/scripts/LVGLImage.py --ofmt C --cf RGB565A8 -o ./assets/settings_screen/c ./assets/settings_screen/sun_icon.png

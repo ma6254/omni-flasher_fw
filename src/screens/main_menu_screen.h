@@ -23,13 +23,14 @@ typedef struct
 
 typedef enum
 {
-    MAIN_MENU_SCREEN_FLASH = 0,   // Flash芯片
-    MAIN_MENU_SCREEN_SD,          // SD卡
-    MAIN_MENU_SCREEN_SERIAL,      // 串口
-    MAIN_MENU_SCREEN_DAPLINK,     // DAP在线调试烧录
-    MAIN_MENU_SCREEN_SETTINGS,    // 设置
-    MAIN_MENU_SCREEN_SYS_INFO,    // 系统信息
-    MAIN_MENU_SCREEN_ENUM_COUNT,  // 枚举个数
+    MAIN_MENU_SCREEN_REMOTE = 0, // 在线模式
+    MAIN_MENU_SCREEN_FLASH,      // Flash芯片
+    MAIN_MENU_SCREEN_SD,         // SD卡
+    MAIN_MENU_SCREEN_SERIAL,     // 串口
+    MAIN_MENU_SCREEN_DAPLINK,    // DAP在线调试烧录
+    MAIN_MENU_SCREEN_SETTINGS,   // 设置
+    MAIN_MENU_SCREEN_SYS_INFO,   // 系统信息
+    MAIN_MENU_SCREEN_ENUM_COUNT, // 枚举个数
 } main_menu_screen_item_t;
 
 extern const screen_t main_menu_screen;

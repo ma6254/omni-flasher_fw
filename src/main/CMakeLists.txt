@@ -1,15 +1,28 @@
 file(
   GLOB
   ASSETS_SRC_FILES
+
+  # startup_screen
   ../../assets/startup_screen/c/startup_gif.c
+  ../../assets/main_menu_screen/c/remote_icon.c
   ../../assets/main_menu_screen/c/flash_icon.c
   ../../assets/main_menu_screen/c/serial_icon.c
   ../../assets/main_menu_screen/c/sd_card_icon.c
   ../../assets/main_menu_screen/c/settings_icon.c
   ../../assets/main_menu_screen/c/info_icon.c
   ../../assets/main_menu_screen/c/jtag_icon.c
+  
+  # remote_screen
+  ../../assets/remote_screen/c/usb_icon.c
+  ../../assets/remote_screen/c/wifi_icon.c
+  ../../assets/remote_screen/c/flashrom_logo.c
+
+  # settings_screen
   ../../assets/settings_screen/c/sun_icon.c
+  
+  # fonts
   ../../assets/fonts/c/main_menu_screen_item_font.c
+  ../../assets/fonts/c/remote_screen_item_font.c
   ../../assets/fonts/c/serial_screen_item_font.c
   ../../assets/fonts/c/settings_screen_item_font.c
 )

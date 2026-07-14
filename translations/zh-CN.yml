@@ -1,4 +1,5 @@
 zh-CN:
+  main_menu_screen.remote: 在线模式
   main_menu_screen.serial: 串口
   main_menu_screen.sys_info: 系统信息
   main_menu_screen.settings: 系统设置
@@ -12,3 +13,5 @@ zh-CN:
   settings_screen.usb_rs485: USB转RS485
   settings_screen.recorder: 串口记录器
   settings_screen.usb_vcom_x2: USB转双路串口
+  settings_screen.wifi_web: WIFI网页
+  settings_screen.serprog: serprog

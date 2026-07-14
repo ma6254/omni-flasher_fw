@@ -1,6 +1,7 @@
 #include <string.h>
 #include <esp_log.h>
 #include "main_menu_screen.h"
+#include "remote_screen.h"
 #include "serial_screen.h"
 #include "settings_screen.h"
 #include "sys_info_screen.h"
@@ -14,6 +15,13 @@ static int32_t prev_focused_index = -1;
 static main_menu_screen_item_handle_t item_handle_list[MAIN_MENU_SCREEN_ENUM_COUNT] = {0};
 
 static const main_menu_screen_item_cfg_t btn_cfg_list[MAIN_MENU_SCREEN_ENUM_COUNT] = {
+    {
+        "Remote",
+        .is_impled = true,
+        .icon = &remote_icon,
+        .icon_scale_a = 32,
+        .icon_scale_b = 72,
+    },
     {
         "Flash IC",
         .is_impled = true,
@@ -65,7 +73,12 @@ static bool ui_i18n_get_title_name(uint32_t index, char *out_buf, size_t buf_siz
     const char *str = NULL;
     bool is_found = false;
 
-    if (index == MAIN_MENU_SCREEN_SERIAL)
+    if (index == MAIN_MENU_SCREEN_REMOTE)
+    {
+        str = _("main_menu_screen.remote");
+        is_found = true;
+    }
+    else if (index == MAIN_MENU_SCREEN_SERIAL)
     {
         str = _("main_menu_screen.serial");
         is_found = true;
@@ -137,6 +150,10 @@ void item_switch(uint32_t index)
 {
     switch (index)
     {
+    case MAIN_MENU_SCREEN_REMOTE:
+        screen_set_load_anim(LV_SCR_LOAD_ANIM_OVER_LEFT);
+        screen_switch(&remote_screen);
+        break;
     case MAIN_MENU_SCREEN_SERIAL:
         screen_set_load_anim(LV_SCR_LOAD_ANIM_OVER_LEFT);
         screen_switch(&serial_screen);
@@ -371,7 +388,15 @@ static void indev_group_init(void)
 static void indev_group_focus_init(void)
 {
     screen_t *prev_screen = screen_get_prev();
-    if (prev_screen == &serial_screen)
+
+    if (prev_screen == &remote_screen)
+    {
+        main_menu_screen_item_handle_t *item_handle = &item_handle_list[MAIN_MENU_SCREEN_REMOTE];
+        ESP_LOGI(TAG, "prev_screen: remote_screen");
+
+        lv_group_focus_obj(item_handle->btn);
+    }
+    else if (prev_screen == &serial_screen)
     {
         main_menu_screen_item_handle_t *item_handle = &item_handle_list[MAIN_MENU_SCREEN_SERIAL];
         ESP_LOGI(TAG, "prev_screen: serial_screen");
@@ -394,7 +419,7 @@ static void indev_group_focus_init(void)
     }
     else
     {
-        main_menu_screen_item_handle_t *item_handle = &item_handle_list[MAIN_MENU_SCREEN_FLASH];
+        main_menu_screen_item_handle_t *item_handle = &item_handle_list[0];
         ESP_LOGI(TAG, "prev_screen: none");
 
         ui_set_item_focus(MAIN_MENU_SCREEN_FLASH, true);
@@ -447,7 +472,11 @@ static void main_menu_screen_init(lv_obj_t *parent)
 
     bool is_sub_screen_back = false;
     screen_t *prev_screen = screen_get_prev();
-    if ((prev_screen == &serial_screen) || (prev_screen == &settings_screen) || (prev_screen == &sys_info_screen))
+
+    if ((prev_screen == &remote_screen) ||   //
+        (prev_screen == &serial_screen) ||   //
+        (prev_screen == &settings_screen) || //
+        (prev_screen == &sys_info_screen))   //
     {
         ESP_LOGI(TAG, "is sub_screen_back");
         is_sub_screen_back = true;
