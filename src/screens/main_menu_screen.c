@@ -1,6 +1,7 @@
 #include <string.h>
 #include <esp_log.h>
 #include "main_menu_screen.h"
+#include "serial_screen.h"
 #include "settings_screen.h"
 #include "sys_info_screen.h"
 #include "buzzer.h"
@@ -137,6 +138,8 @@ void item_switch(uint32_t index)
     switch (index)
     {
     case MAIN_MENU_SCREEN_SERIAL:
+        screen_set_load_anim(LV_SCR_LOAD_ANIM_OVER_LEFT);
+        screen_switch(&serial_screen);
         break;
     case MAIN_MENU_SCREEN_SETTINGS:
         screen_set_load_anim(LV_SCR_LOAD_ANIM_OVER_LEFT);
@@ -368,7 +371,14 @@ static void indev_group_init(void)
 static void indev_group_focus_init(void)
 {
     screen_t *prev_screen = screen_get_prev();
-    if (prev_screen == &settings_screen)
+    if (prev_screen == &serial_screen)
+    {
+        main_menu_screen_item_handle_t *item_handle = &item_handle_list[MAIN_MENU_SCREEN_SERIAL];
+        ESP_LOGI(TAG, "prev_screen: serial_screen");
+
+        lv_group_focus_obj(item_handle->btn);
+    }
+    else if (prev_screen == &settings_screen)
     {
         main_menu_screen_item_handle_t *item_handle = &item_handle_list[MAIN_MENU_SCREEN_SETTINGS];
         ESP_LOGI(TAG, "prev_screen: settings_screen");
@@ -437,7 +447,7 @@ static void main_menu_screen_init(lv_obj_t *parent)
 
     bool is_sub_screen_back = false;
     screen_t *prev_screen = screen_get_prev();
-    if ((prev_screen == &settings_screen) || (prev_screen == &sys_info_screen))
+    if ((prev_screen == &serial_screen) || (prev_screen == &settings_screen) || (prev_screen == &sys_info_screen))
     {
         ESP_LOGI(TAG, "is sub_screen_back");
         is_sub_screen_back = true;

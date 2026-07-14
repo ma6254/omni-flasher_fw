@@ -142,7 +142,7 @@ static void startup_screen_init(lv_obj_t *parent)
         lv_anim_start(&top_mask_anim);
     }
 
-    startup_timer = lv_timer_create(startup_timer_cb, 10000, NULL);
+    startup_timer = lv_timer_create(startup_timer_cb, 3000, NULL);
     lv_timer_pause(startup_timer);
     lv_timer_reset(startup_timer);
     lv_timer_resume(startup_timer);

@@ -10,6 +10,7 @@ file(
   ../../assets/main_menu_screen/c/jtag_icon.c
   ../../assets/settings_screen/c/sun_icon.c
   ../../assets/fonts/c/main_menu_screen_item_font.c
+  ../../assets/fonts/c/serial_screen_item_font.c
   ../../assets/fonts/c/settings_screen_item_font.c
 )
 
@@ -28,6 +29,7 @@ file(
     ../components/key/*.c
     ../components/buzzer/*.c
     ../components/config/*.c
+    ../screens/components/lv_exmenu/*.c
     ../screens/*.c
 )
 
@@ -45,6 +47,8 @@ idf_component_register(
         ../components/key
         ../components/buzzer
         ../components/config
+        ../screens/components
+        ../screens/components/lv_exmenu
         ../screens
     PRIV_REQUIRES
         esp_driver_gpio

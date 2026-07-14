@@ -8,3 +8,7 @@ en-US:
   settings_screen.info: SysInfo
   settings_screen.about: About
   settings_screen.startup_anim: Start Anime
+  settings_screen.usb_vcom: USB_VCOM
+  settings_screen.usb_vcom_x2: USB_VCOM_X2
+  settings_screen.usb_rs485: USB_RS485
+  settings_screen.recorder: RECORDER

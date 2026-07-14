@@ -35,5 +35,16 @@ if errorlevel 1 (
     exit /b 1
 )
 
+call lv_font_conv ^
+    --font "%ROOT_DIR%\assets\fonts\AlibabaPuHuiTi-3\AlibabaPuHuiTi-3-65-Medium\AlibabaPuHuiTi-3-65-Medium.ttf" ^
+    --size 20 --bpp 4 --format lvgl --no-compress ^
+    --output "%ROOT_DIR%\assets\fonts\c\serial_screen_item_font.c" ^
+    --range 32-127 ^
+    --symbols 转串口带硬件流控记录器双路三四
+if errorlevel 1 (
+    echo [ERROR] 生成 serial_screen_item_font.c 失败。
+    exit /b 1
+)
+
 echo Fonts generation completed.
 endlocal

@@ -351,9 +351,9 @@ void screen_init(void)
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_white(), LV_PART_MAIN); // 背景色
     lvgl_port_unlock();
 
-    // esp_err = screen_switch(&startup_screen);
+    esp_err = screen_switch(&startup_screen);
     // esp_err = screen_switch(&setting_screen);
-    esp_err = screen_switch(&settings_screen);
+    // esp_err = screen_switch(&settings_screen);
     ESP_ERROR_CHECK(esp_err);
 }
 
