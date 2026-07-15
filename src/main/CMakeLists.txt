@@ -42,8 +42,10 @@ file(
     ../components/key/*.c
     ../components/buzzer/*.c
     ../components/config/*.c
+    ../components/serprog/*.c
     ../screens/components/lv_exmenu/*.c
     ../screens/*.c
+    ../screens/remote_screen/*.c
 )
 
 idf_component_register(
@@ -60,9 +62,11 @@ idf_component_register(
         ../components/key
         ../components/buzzer
         ../components/config
+        ../components/serprog
         ../screens/components
         ../screens/components/lv_exmenu
         ../screens
+        ../screens/remote_screen
     PRIV_REQUIRES
         esp_driver_gpio
         spi_flash

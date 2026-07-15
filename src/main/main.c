@@ -23,6 +23,7 @@
 #include "config.h"
 #include "lvgl_app.h"
 #include "lvgl_benchmark.h"
+#include "tinyusb.h"
 
 static const char *TAG = "main";
 
@@ -143,6 +144,7 @@ void app_main(void)
     board_init();
     key_init();
     buzzer_init();
+    tinyusb_driver_uninstall();
     lvgl_app_init();
     screen_init();
     // lv_demo_benchmark_init();

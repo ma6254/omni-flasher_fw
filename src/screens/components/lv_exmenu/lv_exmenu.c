@@ -279,6 +279,7 @@ static void lv_exmenu_item_btn_event_handler(lv_event_t *e)
 
     uint32_t code = lv_event_get_code(e);
     lv_exmenu_item_event_t *item_event = lv_event_get_user_data(e);
+    lv_exmenu_handle_t *handle = item_event->handle;
     if (item_event == NULL)
     {
         ESP_LOGE(TAG, "lv_exmenu_item_btn_event_handler user_data is NULL");
@@ -288,6 +289,11 @@ static void lv_exmenu_item_btn_event_handler(lv_event_t *e)
     if(code == LV_EVENT_CLICKED)
     {
         // ESP_LOGI(TAG, "lv_exmenu_item_btn_event_handler LV_EVENT_CLICKED index=%" PRIu32, item_event->index);
+
+        if(handle->cfg.clicked_cb != NULL)
+        {
+            handle->cfg.clicked_cb(handle, item_event->index);
+        }
     }
     else if (code == LV_EVENT_FOCUSED)
     {
@@ -295,22 +301,22 @@ static void lv_exmenu_item_btn_event_handler(lv_event_t *e)
         buzzer_set(50, 1, 0);
         // item_event->handle->pending_focused_index = item_event->index;
 
-        lv_exmenu_item_ui_set_focus_anim(item_event->handle, item_event->index, true);
+        lv_exmenu_item_ui_set_focus_anim(handle, item_event->index, true);
 
         // item_event->handle->pending_focused_index = item_event->index;
     }
     else if (code == LV_EVENT_DEFOCUSED)
     {
-        lv_group_t *group = item_event->handle->group;
+        lv_group_t *group = handle->group;
         lv_obj_t *focused_obj = NULL;
         if (group != NULL)
         {
             focused_obj = lv_group_get_focused(group);
         }
 
-        if (lv_exmenu_is_menu_item_obj(item_event->handle, focused_obj) == false)
+        if (lv_exmenu_is_menu_item_obj(handle, focused_obj) == false)
         {
-            lv_exmenu_item_ui_set_focus_anim(item_event->handle, -1, true);
+            lv_exmenu_item_ui_set_focus_anim(handle, -1, true);
         }
     }
 }
@@ -528,6 +534,7 @@ esp_err_t lv_exmenu_set_focus(lv_exmenu_handle_t *handle, int32_t index, bool an
             ESP_LOGE(TAG, "lv_exmenu_set_focus: obj is NULL");
             return ESP_ERR_INVALID_STATE;
         }
+        lv_exmenu_item_ui_set_focus_anim(handle, index, anim_on);
         lv_group_focus_obj(obj);
     }
     else

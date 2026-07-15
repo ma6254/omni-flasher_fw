@@ -179,3 +179,5 @@ lvgl_benchmark: =======================================
 - **ESP32S3 Official Documentation** <https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/>
 - **LVGL Image Converter** <https://lvgl.io/tools/imageconverter>
 - **Google Fonts Icons** <https://fonts.google.com/icons>
+- **ESP32 Serprog** <https://github.com/thisiseth/esp32-serprog>
+- **Serprog Protocol** <https://flashrom.org/supported_hw/supported_prog/serprog/serprog-protocol.html>
